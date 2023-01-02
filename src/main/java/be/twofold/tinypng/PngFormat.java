@@ -9,7 +9,15 @@ public final class PngFormat {
     private final int bitDepth;
     private final boolean linear;
 
-    public PngFormat(int width, int height, int bitDepth, ColorType colorType, boolean linear) {
+    public PngFormat(int width, int height, ColorType colorType) {
+        this(width, height, colorType, 8);
+    }
+
+    public PngFormat(int width, int height, ColorType colorType, int bitDepth) {
+        this(width, height, colorType, bitDepth, false);
+    }
+
+    public PngFormat(int width, int height, ColorType colorType, int bitDepth, boolean linear) {
         Objects.requireNonNull(colorType, "colorType is null");
         if (width <= 0) {
             throw new IllegalArgumentException("width must be greater than 0");
@@ -49,7 +57,7 @@ public final class PngFormat {
     }
 
     public int getBytesPerPixel() {
-        return colorType.channels * (bitDepth == 8 ? 1 : 2);
+        return colorType.getChannels() * (bitDepth == 8 ? 1 : 2);
     }
 
     public int getBytesPerRow() {

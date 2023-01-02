@@ -27,8 +27,8 @@ public final class PngWriter implements AutoCloseable {
     public void write(byte[] image) throws IOException {
         output.write(Magic);
         writeChunk("IHDR", createIHDR());
-        writeChunk("gAMA", createGAMA(info.linear() ? 1.0f : 2.2f));
-        if (!info.linear()) {
+        writeChunk("gAMA", createGAMA(info.isLinear() ? 1.0f : 2.2f));
+        if (!info.isLinear()) {
             writeChunk("sRGB", new byte[]{0});
         }
         writeIdat(image);
@@ -37,10 +37,10 @@ public final class PngWriter implements AutoCloseable {
 
     private byte[] createIHDR() {
         return ByteBuffer.allocate(13)
-            .putInt(info.width())
-            .putInt(info.height())
-            .put((byte) info.bitDepth())
-            .put((byte) info.colorType().code)
+            .putInt(info.getWidth())
+            .putInt(info.getHeight())
+            .put((byte) info.getBitDepth())
+            .put((byte) info.getColorType().getCode())
             .put((byte) 0)
             .put((byte) 0)
             .put((byte) 0)
@@ -48,12 +48,12 @@ public final class PngWriter implements AutoCloseable {
     }
 
     private byte[] createGAMA(float gamma) {
-        return toBytes(Math.round((1.0f / gamma) * 100_000));
+        return toBytes(Math.round(1.0f / gamma * 100_000));
     }
 
     private void writeIdat(byte[] data) throws IOException {
         try (OutputStream ios = new IdatOutputStream(this)) {
-            for (int y = 0; y < info.height(); y++) {
+            for (int y = 0; y < info.getHeight(); y++) {
                 int filterMethod = filter(data, y * info.getBytesPerRow());
                 ios.write(filterMethod);
                 ios.write(filtered[filterMethod], info.getBytesPerPixel(), info.getBytesPerRow());
@@ -80,7 +80,12 @@ public final class PngWriter implements AutoCloseable {
     }
 
     private byte[] toBytes(int value) {
-        return ByteBuffer.allocate(Integer.BYTES).putInt(value).array();
+        return new byte[]{
+            (byte) (value >> 24),
+            (byte) (value >> 16),
+            (byte) (value >> 8),
+            (byte) value
+        };
     }
 
     @Override
@@ -113,7 +118,7 @@ public final class PngWriter implements AutoCloseable {
             int b = Byte.toUnsignedInt(prev[i]);
             int c = Byte.toUnsignedInt(prev[i - bpp]);
 
-            nRow[i] = (byte) (x);
+            nRow[i] = (byte) x;
             sRow[i] = (byte) (x - a);
             uRow[i] = (byte) (x - b);
             aRow[i] = (byte) (x - (a + b >>> 1));
