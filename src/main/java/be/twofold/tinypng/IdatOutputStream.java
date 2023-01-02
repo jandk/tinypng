@@ -37,7 +37,7 @@ final class IdatOutputStream extends OutputStream {
             while (!deflater.finished()) {
                 deflate();
             }
-            pngWriter.writeChunk("IDAT", buffer, length);
+            pngWriter.writeChunk(ChunkType.IDAT, buffer, length);
         }
         deflater.end();
     }
@@ -47,7 +47,7 @@ final class IdatOutputStream extends OutputStream {
         if (len > 0) {
             length += len;
             if (length == buffer.length) {
-                pngWriter.writeChunk("IDAT", buffer);
+                pngWriter.writeChunk(ChunkType.IDAT, buffer);
                 length = 0;
             }
         }
