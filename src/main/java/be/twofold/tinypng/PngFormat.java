@@ -5,19 +5,19 @@ import java.util.*;
 public final class PngFormat {
     private final int width;
     private final int height;
-    private final ColorType colorType;
+    private final PngColorType colorType;
     private final int bitDepth;
     private final boolean linear;
 
-    public PngFormat(int width, int height, ColorType colorType) {
+    public PngFormat(int width, int height, PngColorType colorType) {
         this(width, height, colorType, 8);
     }
 
-    public PngFormat(int width, int height, ColorType colorType, int bitDepth) {
+    public PngFormat(int width, int height, PngColorType colorType, int bitDepth) {
         this(width, height, colorType, bitDepth, false);
     }
 
-    public PngFormat(int width, int height, ColorType colorType, int bitDepth, boolean linear) {
+    public PngFormat(int width, int height, PngColorType colorType, int bitDepth, boolean linear) {
         Objects.requireNonNull(colorType, "colorType is null");
         if (width <= 0) {
             throw new IllegalArgumentException("width must be greater than 0");
@@ -44,7 +44,7 @@ public final class PngFormat {
         return height;
     }
 
-    public ColorType getColorType() {
+    public PngColorType getColorType() {
         return colorType;
     }
 
