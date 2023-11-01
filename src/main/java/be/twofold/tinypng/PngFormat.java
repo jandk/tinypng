@@ -1,6 +1,6 @@
 package be.twofold.tinypng;
 
-import java.util.*;
+import be.twofold.common.*;
 
 public final class PngFormat {
     private final int width;
@@ -18,16 +18,11 @@ public final class PngFormat {
     }
 
     public PngFormat(int width, int height, PngColorType colorType, int bitDepth, boolean linear) {
-        Objects.requireNonNull(colorType, "colorType is null");
-        if (width <= 0) {
-            throw new IllegalArgumentException("width must be greater than 0");
-        }
-        if (height <= 0) {
-            throw new IllegalArgumentException("height must be greater than 0");
-        }
-        if (bitDepth != 8 && bitDepth != 16) {
-            throw new IllegalArgumentException("bitDepth must be 8 or 16");
-        }
+        Check.argument(width > 0, "width must be greater than 0");
+        Check.argument(height > 0, "height must be greater than 0");
+        Check.notNull(colorType, "colorType must not be null");
+        Check.argument(bitDepth == 8 || bitDepth == 16, "bitDepth must be 8 or 16");
+
         this.width = width;
         this.height = height;
         this.colorType = colorType;

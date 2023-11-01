@@ -1,8 +1,9 @@
 package be.twofold.tinypng;
 
+import be.twofold.common.*;
+
 import java.io.*;
 import java.nio.*;
-import java.util.*;
 import java.util.zip.*;
 
 /**
@@ -31,8 +32,8 @@ public final class PngOutputStream implements AutoCloseable {
     private int idatLength = 0;
 
     public PngOutputStream(OutputStream output, PngFormat format) {
-        this.output = Objects.requireNonNull(output, "output is null");
-        this.format = Objects.requireNonNull(format, "format is null");
+        this.output = Check.notNull(output, "output must not be null");
+        this.format = Check.notNull(format, "format must not be null");
         this.filtered = new byte[5][format.getBytesPerPixel() + format.getBytesPerRow()];
         this.previous = new byte[format.getBytesPerPixel() + format.getBytesPerRow()];
 
