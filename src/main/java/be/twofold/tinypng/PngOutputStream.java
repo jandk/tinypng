@@ -11,7 +11,7 @@ import java.util.zip.*;
  * <p>
  * So here we are. Good thing it's not that hard to write a PNG file.
  */
-final class PngOutputStream implements AutoCloseable {
+public final class PngOutputStream implements AutoCloseable {
     private static final byte[] Magic = new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
     private static final int IHDR = 0x49484452;
     private static final int PLTE = 0x504c5445;
@@ -30,7 +30,7 @@ final class PngOutputStream implements AutoCloseable {
     private final byte[] idatBuffer = new byte[32 * 1024];
     private int idatLength = 0;
 
-    PngOutputStream(OutputStream output, PngFormat format) {
+    public PngOutputStream(OutputStream output, PngFormat format) {
         this.output = Objects.requireNonNull(output, "output is null");
         this.format = Objects.requireNonNull(format, "format is null");
         this.filtered = new byte[5][format.getBytesPerPixel() + format.getBytesPerRow()];
@@ -44,7 +44,7 @@ final class PngOutputStream implements AutoCloseable {
         }
     }
 
-    void writeImage(byte[] image) throws IOException {
+    public void writeImage(byte[] image) throws IOException {
         if (image.length != format.getBytesPerImage()) {
             throw new IllegalArgumentException("image has wrong size, expected " + format.getBytesPerImage() + " but was " + image.length);
         }
