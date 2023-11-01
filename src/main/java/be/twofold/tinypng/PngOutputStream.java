@@ -21,10 +21,7 @@ public final class PngOutputStream implements AutoCloseable {
 
     private final OutputStream output;
     private final PngFormat format;
-
-    // Filtering
-    private final byte[][] filtered;
-    private byte[] previous;
+    private final PngFilter filter;
 
     // IDAT
     private final Deflater deflater = new Deflater(Deflater.BEST_SPEED);
@@ -34,9 +31,7 @@ public final class PngOutputStream implements AutoCloseable {
     public PngOutputStream(OutputStream output, PngFormat format) {
         this.output = Check.notNull(output, "output must not be null");
         this.format = Check.notNull(format, "format must not be null");
-        this.filtered = new byte[5][format.getBytesPerPixel() + format.getBytesPerRow()];
-        this.previous = new byte[format.getBytesPerPixel() + format.getBytesPerRow()];
-
+        this.filter = new PngFilter(format);
         try {
             output.write(Magic);
             writeIHDR();
@@ -58,75 +53,10 @@ public final class PngOutputStream implements AutoCloseable {
         if (offset + format.getBytesPerRow() > image.length) {
             throw new IllegalArgumentException("image has wrong size, expected at least " + (offset + format.getBytesPerRow()) + " but was " + image.length);
         }
-        int filterMethod = filter(image, offset);
+        int filterMethod = filter.filter(image, offset);
         deflate(new byte[]{(byte) filterMethod}, 0, 1);
-        deflate(filtered[filterMethod], format.getBytesPerPixel(), format.getBytesPerRow());
+        deflate(filter.getBestRow(filterMethod), format.getBytesPerPixel(), format.getBytesPerRow());
     }
-
-    // region Filtering
-
-    private int filter(byte[] row, int offset) {
-        int bpp = format.getBytesPerPixel();
-        int bpr = format.getBytesPerRow();
-
-        byte[] curr = filtered[0];
-        byte[] sRow = filtered[1];
-        byte[] uRow = filtered[2];
-        byte[] aRow = filtered[3];
-        byte[] pRow = filtered[4];
-
-        System.arraycopy(row, offset, curr, bpp, bpr);
-        for (int i = bpp; i < bpp + bpr; i++) {
-            int x = Byte.toUnsignedInt(curr[i]);
-            int a = Byte.toUnsignedInt(curr[i - bpp]);
-            int b = Byte.toUnsignedInt(previous[i]);
-            int c = Byte.toUnsignedInt(previous[i - bpp]);
-
-            sRow[i] = (byte) (x - a);
-            uRow[i] = (byte) (x - b);
-            aRow[i] = (byte) (x - (a + b >> 1));
-            pRow[i] = (byte) (x - paeth(a, b, c));
-        }
-
-        int best = findBest();
-        byte[] temp = previous;
-        previous = filtered[0];
-        filtered[0] = temp;
-        return best;
-    }
-
-    private int findBest() {
-        int bestRow = 0;
-        int bestSad = Integer.MAX_VALUE;
-        for (int i = 0; i < 5; i++) {
-            int sad = 0;
-            for (byte pixel : filtered[i]) {
-                sad += Math.abs(pixel);
-            }
-            if (sad < bestSad) {
-                bestRow = i;
-                bestSad = sad;
-            }
-        }
-        return bestRow;
-    }
-
-    private static int paeth(int a, int b, int c) {
-        int p = a + b - c;
-        int pa = Math.abs(p - a);
-        int pb = Math.abs(p - b);
-        int pc = Math.abs(p - c);
-
-        if (pa <= pb && pa <= pc) {
-            return a;
-        }
-        if (pb <= pc) {
-            return b;
-        }
-        return c;
-    }
-
-    // endregion
 
     // region Chunk writing
 
