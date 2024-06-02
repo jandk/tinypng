@@ -11,7 +11,7 @@ import java.util.zip.*;
  * <p>
  * So here we are. Good thing it's not that hard to write a PNG file.
  */
-public final class PngOutputStream implements AutoCloseable {
+public final class PngEncoder implements AutoCloseable {
     private static final byte[] Magic = new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
     private static final int IHDR = 0x49484452;
     private static final int PLTE = 0x504c5445;
@@ -27,7 +27,7 @@ public final class PngOutputStream implements AutoCloseable {
     private final byte[] idatBuffer = new byte[32 * 1024];
     private int idatLength = 0;
 
-    public PngOutputStream(OutputStream output, PngFormat format) {
+    public PngEncoder(OutputStream output, PngFormat format) {
         this.output = Objects.requireNonNull(output, "output must not be null");
         this.format = Objects.requireNonNull(format, "format must not be null");
         this.filter = new PngFilter(format);
@@ -39,7 +39,7 @@ public final class PngOutputStream implements AutoCloseable {
         }
     }
 
-    public void writeImage(byte[] image) throws IOException {
+    public void writeImage(byte[] image) {
         if (image.length != format.bytesPerImage()) {
             throw new IllegalArgumentException("image has wrong size, expected " + format.bytesPerImage() + " but was " + image.length);
         }
@@ -48,7 +48,7 @@ public final class PngOutputStream implements AutoCloseable {
         }
     }
 
-    private void writeRow(byte[] image, int offset) throws IOException {
+    private void writeRow(byte[] image, int offset) {
         if (offset + format.bytesPerRow() > image.length) {
             throw new IllegalArgumentException("image has wrong size, expected at least " + (offset + format.bytesPerRow()) + " but was " + image.length);
         }
@@ -59,7 +59,7 @@ public final class PngOutputStream implements AutoCloseable {
 
     // region Chunk writing
 
-    private void writeIHDR() throws IOException {
+    private void writeIHDR() {
         byte[] chunk = ByteBuffer.allocate(13)
             .putInt(format.width())
             .putInt(format.height())
@@ -72,29 +72,33 @@ public final class PngOutputStream implements AutoCloseable {
         writeChunk(IHDR, chunk);
     }
 
-    private void writeIDAT() throws IOException {
+    private void writeIDAT() {
         writeChunk(IDAT, idatBuffer, idatLength);
         idatLength = 0;
     }
 
-    private void writeIEND() throws IOException {
+    private void writeIEND() {
         writeChunk(IEND, new byte[0]);
     }
 
-    private void writeChunk(int type, byte[] data) throws IOException {
+    private void writeChunk(int type, byte[] data) {
         writeChunk(type, data, data.length);
     }
 
-    private void writeChunk(int type, byte[] data, int length) throws IOException {
+    private void writeChunk(int type, byte[] data, int length) {
         byte[] rawType = toBytes(type);
         CRC32 crc32 = new CRC32();
         crc32.update(rawType, 0, rawType.length);
         crc32.update(data, 0, length);
 
-        output.write(toBytes(length));
-        output.write(rawType);
-        output.write(data, 0, length);
-        output.write(toBytes((int) crc32.getValue()));
+        try {
+            output.write(toBytes(length));
+            output.write(rawType);
+            output.write(data, 0, length);
+            output.write(toBytes((int) crc32.getValue()));
+        } catch (IOException e) {
+            throw new PngException("Failed to write chunk", e);
+        }
     }
 
     private static byte[] toBytes(int value) {
@@ -110,14 +114,14 @@ public final class PngOutputStream implements AutoCloseable {
 
     // region Deflate
 
-    private void deflate(byte[] array, int offset, int length) throws IOException {
+    private void deflate(byte[] array, int offset, int length) {
         deflater.setInput(array, offset, length);
         while (!deflater.needsInput()) {
             deflate();
         }
     }
 
-    private void deflate() throws IOException {
+    private void deflate() {
         int len = deflater.deflate(idatBuffer, idatLength, idatBuffer.length - idatLength);
         if (len > 0) {
             idatLength += len;
