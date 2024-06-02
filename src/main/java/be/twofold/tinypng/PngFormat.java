@@ -18,17 +18,15 @@ public final class PngFormat {
     }
 
     public PngFormat(int width, int height, PngColorType colorType, PngBitDepth bitDepth, boolean linear) {
-        Objects.requireNonNull(colorType, "colorType must not be null");
-        Objects.requireNonNull(bitDepth, "bitDepth must not be null");
         if (width <= 0) {
-            throw new IllegalArgumentException("width must be greater than 0");
+            throw new PngException("width must be greater than 0");
         }
         if (height <= 0) {
-            throw new IllegalArgumentException("height must be greater than 0");
+            throw new PngException("height must be greater than 0");
         }
-        if (bitDepth != PngBitDepth.Eight && bitDepth != PngBitDepth.Sixteen) {
-            throw new IllegalArgumentException("bitDepth must be 8 or 16");
-        }
+        Objects.requireNonNull(colorType, "colorType must not be null");
+        Objects.requireNonNull(bitDepth, "bitDepth must not be null");
+        checkDepthColor(bitDepth, colorType);
 
         this.width = width;
         this.height = height;
@@ -37,36 +35,53 @@ public final class PngFormat {
         this.linear = linear;
     }
 
-    public int getWidth() {
+    private void checkDepthColor(PngBitDepth bitDepth, PngColorType colorType) {
+        if ((bitDepth == PngBitDepth.One || bitDepth == PngBitDepth.Two || bitDepth == PngBitDepth.Four)
+            && (colorType == PngColorType.Rgb || colorType == PngColorType.GrayAlpha || colorType == PngColorType.RgbAlpha)
+            || (bitDepth == PngBitDepth.Sixteen && colorType == PngColorType.Indexed)
+        ) {
+            throw new PngException("Invalid bit depth " + bitDepth + " for color type " + colorType);
+        }
+    }
+
+    public int width() {
         return width;
     }
 
-    public int getHeight() {
+    public int height() {
         return height;
     }
 
-    public PngColorType getColorType() {
+    public PngColorType colorType() {
         return colorType;
     }
 
-    public PngBitDepth getBitDepth() {
+    public PngBitDepth bitDepth() {
         return bitDepth;
     }
 
-    public boolean isLinear() {
+    public boolean linear() {
         return linear;
     }
 
-    public int getBytesPerPixel() {
-        return colorType.samples() * (bitDepth == PngBitDepth.Eight ? 1 : 2);
+    public int bytesPerPixel() {
+        return colorType.samples() * ((bitDepth.value() + 7) >>> 3);
     }
 
-    public int getBytesPerRow() {
-        return getBytesPerPixel() * width;
+    public int bytesPerRow() {
+        int samples = width * colorType.samples();
+        switch (bitDepth) {
+            case Eight:
+                return samples;
+            case Sixteen:
+                return samples * 2;
+            default:
+                return (samples * bitDepth.value()) + 7 >>> 3;
+        }
     }
 
-    public int getBytesPerImage() {
-        return getBytesPerRow() * height;
+    public int bytesPerImage() {
+        return bytesPerRow() * height;
     }
 
     @Override

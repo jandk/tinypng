@@ -40,31 +40,31 @@ public final class PngOutputStream implements AutoCloseable {
     }
 
     public void writeImage(byte[] image) throws IOException {
-        if (image.length != format.getBytesPerImage()) {
-            throw new IllegalArgumentException("image has wrong size, expected " + format.getBytesPerImage() + " but was " + image.length);
+        if (image.length != format.bytesPerImage()) {
+            throw new IllegalArgumentException("image has wrong size, expected " + format.bytesPerImage() + " but was " + image.length);
         }
-        for (int y = 0; y < format.getHeight(); y++) {
-            writeRow(image, y * format.getBytesPerRow());
+        for (int y = 0; y < format.height(); y++) {
+            writeRow(image, y * format.bytesPerRow());
         }
     }
 
     private void writeRow(byte[] image, int offset) throws IOException {
-        if (offset + format.getBytesPerRow() > image.length) {
-            throw new IllegalArgumentException("image has wrong size, expected at least " + (offset + format.getBytesPerRow()) + " but was " + image.length);
+        if (offset + format.bytesPerRow() > image.length) {
+            throw new IllegalArgumentException("image has wrong size, expected at least " + (offset + format.bytesPerRow()) + " but was " + image.length);
         }
         int filterMethod = filter.filter(image, offset);
         deflate(new byte[]{(byte) filterMethod}, 0, 1);
-        deflate(filter.getBestRow(filterMethod), format.getBytesPerPixel(), format.getBytesPerRow());
+        deflate(filter.bestRow(filterMethod), format.bytesPerPixel(), format.bytesPerRow());
     }
 
     // region Chunk writing
 
     private void writeIHDR() throws IOException {
         byte[] chunk = ByteBuffer.allocate(13)
-            .putInt(format.getWidth())
-            .putInt(format.getHeight())
-            .put((byte) format.getBitDepth().value())
-            .put((byte) format.getColorType().code())
+            .putInt(format.width())
+            .putInt(format.height())
+            .put((byte) format.bitDepth().value())
+            .put((byte) format.colorType().code())
             .put((byte) 0)
             .put((byte) 0)
             .put((byte) 0)
