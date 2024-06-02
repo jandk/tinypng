@@ -34,6 +34,7 @@ public final class PngEncoder implements AutoCloseable {
         try {
             output.write(Magic);
             writeIHDR();
+            writePLTE();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -70,6 +71,22 @@ public final class PngEncoder implements AutoCloseable {
             .put((byte) 0)
             .array();
         writeChunk(IHDR, chunk);
+    }
+
+    private void writePLTE() {
+        if (format.colorType() != PngColorType.Indexed) {
+            return;
+        }
+
+        PngPalette palette = format.palette();
+        byte[] data = new byte[palette.size() * 3];
+        for (int i = 0; i < palette.size(); i++) {
+            PngPalette.Color color = palette.get(i);
+            data[i * 3] = color.red();
+            data[i * 3 + 1] = color.green();
+            data[i * 3 + 2] = color.blue();
+        }
+        writeChunk(PLTE, data);
     }
 
     private void writeIDAT() {

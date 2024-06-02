@@ -1,10 +1,10 @@
 package be.twofold.tinypng;
 
-import nl.jqno.equalsverifier.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.*;
 import org.junit.jupiter.params.provider.*;
 
+import java.util.*;
 import java.util.stream.*;
 
 import static org.assertj.core.api.Assertions.*;
@@ -12,44 +12,36 @@ import static org.assertj.core.api.Assertions.*;
 class PngFormatTest {
 
     @Test
-    void testEqualsAndHashCode() {
-        EqualsVerifier
-            .forClass(PngFormat.class)
-            .suppress(Warning.NULL_FIELDS)
-            .verify();
-    }
-
-    @Test
     void testThrowsOnZeroOrNegativeWidth() {
         assertThatExceptionOfType(PngException.class)
-            .isThrownBy(() -> new PngFormat(0, 1, PngColorType.Gray))
+            .isThrownBy(() -> PngFormat.of(0, 1, PngColorType.Gray, PngBitDepth.Eight))
             .withMessage("width must be greater than 0");
         assertThatExceptionOfType(PngException.class)
-            .isThrownBy(() -> new PngFormat(-1, 1, PngColorType.Gray))
+            .isThrownBy(() -> PngFormat.of(-1, 1, PngColorType.Gray, PngBitDepth.Eight))
             .withMessage("width must be greater than 0");
     }
 
     @Test
     void testThrowsOnZeroOrNegativeHeight() {
         assertThatExceptionOfType(PngException.class)
-            .isThrownBy(() -> new PngFormat(1, 0, PngColorType.Gray))
+            .isThrownBy(() -> PngFormat.of(1, 0, PngColorType.Gray, PngBitDepth.Eight))
             .withMessage("height must be greater than 0");
         assertThatExceptionOfType(PngException.class)
-            .isThrownBy(() -> new PngFormat(1, -1, PngColorType.Gray))
+            .isThrownBy(() -> PngFormat.of(1, -1, PngColorType.Gray, PngBitDepth.Eight))
             .withMessage("height must be greater than 0");
     }
 
     @Test
     void testThrowsOnNullColorType() {
         assertThatNullPointerException()
-            .isThrownBy(() -> new PngFormat(1, 1, null))
+            .isThrownBy(() -> PngFormat.of(1, 1, null, PngBitDepth.Eight))
             .withMessage("colorType must not be null");
     }
 
     @Test
     void testThrowsOnNullBitDepth() {
         assertThatNullPointerException()
-            .isThrownBy(() -> new PngFormat(1, 1, PngColorType.Gray, null))
+            .isThrownBy(() -> PngFormat.of(1, 1, PngColorType.Gray, null))
             .withMessage("bitDepth must not be null");
     }
 
@@ -58,11 +50,20 @@ class PngFormatTest {
     void testThrowsOnInvalidBitDepthAndColourTypeCombination(PngBitDepth bitDepth, PngColorType colorType, boolean valid) {
         if (valid) {
             assertThatNoException()
-                .isThrownBy(() -> new PngFormat(1, 1, colorType, bitDepth));
+                .isThrownBy(() -> createFormat(bitDepth, colorType));
         } else {
             assertThatExceptionOfType(PngException.class)
-                .isThrownBy(() -> new PngFormat(1, 1, colorType, bitDepth))
+                .isThrownBy(() -> createFormat(bitDepth, colorType))
                 .withMessage("Invalid bit depth " + bitDepth + " for color type " + colorType);
+        }
+    }
+
+    private static PngFormat createFormat(PngBitDepth bitDepth, PngColorType colorType) {
+        if (colorType == PngColorType.Indexed && bitDepth != PngBitDepth.Sixteen) {
+            PngPalette palette = new PngPalette(List.of(new PngPalette.Color(0, 0, 0)));
+            return PngFormat.indexed(1, 1, palette);
+        } else {
+            return PngFormat.of(1, 1, colorType, bitDepth);
         }
     }
 

@@ -7,6 +7,7 @@ import javax.imageio.*;
 import java.awt.image.*;
 import java.io.*;
 import java.nio.*;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -97,34 +98,55 @@ class PngEncoderTest {
         switch (image.getType()) {
             case BufferedImage.TYPE_CUSTOM:
                 if (image.getColorModel().getNumComponents() == 2 && image.getColorModel().getPixelSize() == 16) {
-                    return new PngFormat(width, height, PngColorType.GrayAlpha, PngBitDepth.Eight);
+                    return PngFormat.of(width, height, PngColorType.GrayAlpha, PngBitDepth.Eight);
                 }
                 if (image.getColorModel().getNumComponents() == 2 && image.getColorModel().getPixelSize() == 32) {
-                    return new PngFormat(width, height, PngColorType.GrayAlpha, PngBitDepth.Sixteen);
+                    return PngFormat.of(width, height, PngColorType.GrayAlpha, PngBitDepth.Sixteen);
                 }
                 if (image.getColorModel().getNumComponents() == 3 && image.getColorModel().getPixelSize() == 48) {
-                    return new PngFormat(width, height, PngColorType.Rgb, PngBitDepth.Sixteen);
+                    return PngFormat.of(width, height, PngColorType.Rgb, PngBitDepth.Sixteen);
                 }
                 if (image.getColorModel().getNumComponents() == 4 && image.getColorModel().getPixelSize() == 64) {
-                    return new PngFormat(width, height, PngColorType.RgbAlpha, PngBitDepth.Sixteen);
+                    return PngFormat.of(width, height, PngColorType.RgbAlpha, PngBitDepth.Sixteen);
                 }
                 throw new IllegalArgumentException("Unsupported custom image type: " + image.getColorModel());
             case BufferedImage.TYPE_INT_ARGB:
             case BufferedImage.TYPE_4BYTE_ABGR:
-                return new PngFormat(width, height, PngColorType.RgbAlpha);
+                return PngFormat.of(width, height, PngColorType.RgbAlpha, PngBitDepth.Eight);
             case BufferedImage.TYPE_3BYTE_BGR:
-                return new PngFormat(width, height, PngColorType.Rgb);
+                return PngFormat.of(width, height, PngColorType.Rgb, PngBitDepth.Eight);
             case BufferedImage.TYPE_BYTE_GRAY:
-                return new PngFormat(width, height, PngColorType.Gray);
+                return PngFormat.of(width, height, PngColorType.Gray, PngBitDepth.Eight);
             case BufferedImage.TYPE_USHORT_GRAY:
-                return new PngFormat(width, height, PngColorType.Gray, PngBitDepth.Sixteen);
+                return PngFormat.of(width, height, PngColorType.Gray, PngBitDepth.Sixteen);
             case BufferedImage.TYPE_BYTE_BINARY:
-                return new PngFormat(width, height, PngColorType.Gray, fromDepth(image.getColorModel().getPixelSize()));
+                return PngFormat.of(width, height, PngColorType.Gray, fromDepth(image.getColorModel().getPixelSize()));
             case BufferedImage.TYPE_BYTE_INDEXED:
-                return new PngFormat(width, height, PngColorType.Indexed, fromDepth(image.getColorModel().getPixelSize()));
+                return PngFormat.indexed(width, height, paletteFrom(image.getColorModel()));
             default:
                 throw new IllegalArgumentException("Unsupported image type: " + image.getType());
         }
+    }
+
+    private PngPalette paletteFrom(ColorModel cm) {
+        IndexColorModel icm = (IndexColorModel) cm;
+        byte[] reds = new byte[icm.getMapSize()];
+        byte[] greens = new byte[icm.getMapSize()];
+        byte[] blues = new byte[icm.getMapSize()];
+
+        icm.getReds(reds);
+        icm.getGreens(greens);
+        icm.getBlues(blues);
+
+        List<PngPalette.Color> colors = new ArrayList<>();
+        for (int i = 0; i < icm.getMapSize(); i++) {
+            colors.add(new PngPalette.Color(
+                Byte.toUnsignedInt(reds[i]),
+                Byte.toUnsignedInt(greens[i]),
+                Byte.toUnsignedInt(blues[i])
+            ));
+        }
+        return new PngPalette(colors);
     }
 
     private static PngBitDepth fromDepth(int pixelSize) {
