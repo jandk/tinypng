@@ -1,9 +1,8 @@
 package be.twofold.tinypng;
 
-import be.twofold.common.*;
-
 import java.io.*;
 import java.nio.*;
+import java.util.*;
 import java.util.zip.*;
 
 /**
@@ -29,8 +28,8 @@ public final class PngOutputStream implements AutoCloseable {
     private int idatLength = 0;
 
     public PngOutputStream(OutputStream output, PngFormat format) {
-        this.output = Check.notNull(output, "output must not be null");
-        this.format = Check.notNull(format, "format must not be null");
+        this.output = Objects.requireNonNull(output, "output must not be null");
+        this.format = Objects.requireNonNull(format, "format must not be null");
         this.filter = new PngFilter(format);
         try {
             output.write(Magic);
@@ -89,7 +88,7 @@ public final class PngOutputStream implements AutoCloseable {
     private void writeChunk(int type, byte[] data, int length) throws IOException {
         byte[] rawType = toBytes(type);
         CRC32 crc32 = new CRC32();
-        crc32.update(rawType);
+        crc32.update(rawType, 0, rawType.length);
         crc32.update(data, 0, length);
 
         output.write(toBytes(length));

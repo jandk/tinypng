@@ -1,6 +1,6 @@
 package be.twofold.tinypng;
 
-import be.twofold.common.*;
+import java.util.*;
 
 final class PngFilter {
 
@@ -9,7 +9,7 @@ final class PngFilter {
     private byte[] previous;
 
     PngFilter(PngFormat format) {
-        this.format = Check.notNull(format, "format must not be null");
+        this.format = Objects.requireNonNull(format, "format must not be null");
         this.filtered = new byte[5][format.getBytesPerPixel() + format.getBytesPerRow()];
         this.previous = new byte[format.getBytesPerPixel() + format.getBytesPerRow()];
     }

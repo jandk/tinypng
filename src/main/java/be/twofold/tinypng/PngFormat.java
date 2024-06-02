@@ -1,6 +1,6 @@
 package be.twofold.tinypng;
 
-import be.twofold.common.*;
+import java.util.*;
 
 public final class PngFormat {
     private final int width;
@@ -18,10 +18,16 @@ public final class PngFormat {
     }
 
     public PngFormat(int width, int height, PngColorType colorType, int bitDepth, boolean linear) {
-        Check.argument(width > 0, "width must be greater than 0");
-        Check.argument(height > 0, "height must be greater than 0");
-        Check.notNull(colorType, "colorType must not be null");
-        Check.argument(bitDepth == 8 || bitDepth == 16, "bitDepth must be 8 or 16");
+        Objects.requireNonNull(colorType, "colorType must not be null");
+        if (width <= 0) {
+            throw new IllegalArgumentException("width must be greater than 0");
+        }
+        if (height <= 0) {
+            throw new IllegalArgumentException("height must be greater than 0");
+        }
+        if (bitDepth != 8 && bitDepth != 16) {
+            throw new IllegalArgumentException("bitDepth must be 8 or 16");
+        }
 
         this.width = width;
         this.height = height;
@@ -68,11 +74,11 @@ public final class PngFormat {
         if (!(obj instanceof PngFormat)) return false;
 
         PngFormat other = (PngFormat) obj;
-        return width == other.width &&
-               height == other.height &&
-               colorType.equals(other.colorType) &&
-               bitDepth == other.bitDepth &&
-               linear == other.linear;
+        return width == other.width
+            && height == other.height
+            && colorType.equals(other.colorType)
+            && bitDepth == other.bitDepth
+            && linear == other.linear;
     }
 
     @Override
@@ -89,11 +95,11 @@ public final class PngFormat {
     @Override
     public String toString() {
         return "PngFormat(" +
-               "width=" + width + ", " +
-               "height=" + height + ", " +
-               "colorType=" + colorType + ", " +
-               "bitDepth=" + bitDepth + ", " +
-               "linear=" + linear +
-               ")";
+            "width=" + width + ", " +
+            "height=" + height + ", " +
+            "colorType=" + colorType + ", " +
+            "bitDepth=" + bitDepth + ", " +
+            "linear=" + linear +
+            ")";
     }
 }
