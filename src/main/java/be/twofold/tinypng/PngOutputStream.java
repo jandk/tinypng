@@ -63,7 +63,7 @@ public final class PngOutputStream implements AutoCloseable {
         byte[] chunk = ByteBuffer.allocate(13)
             .putInt(format.getWidth())
             .putInt(format.getHeight())
-            .put((byte) format.getBitDepth())
+            .put((byte) format.getBitDepth().value())
             .put((byte) format.getColorType().code())
             .put((byte) 0)
             .put((byte) 0)

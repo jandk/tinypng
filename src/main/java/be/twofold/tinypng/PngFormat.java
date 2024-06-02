@@ -6,26 +6,27 @@ public final class PngFormat {
     private final int width;
     private final int height;
     private final PngColorType colorType;
-    private final int bitDepth;
+    private final PngBitDepth bitDepth;
     private final boolean linear;
 
     public PngFormat(int width, int height, PngColorType colorType) {
-        this(width, height, colorType, 8);
+        this(width, height, colorType, PngBitDepth.Eight);
     }
 
-    public PngFormat(int width, int height, PngColorType colorType, int bitDepth) {
+    public PngFormat(int width, int height, PngColorType colorType, PngBitDepth bitDepth) {
         this(width, height, colorType, bitDepth, false);
     }
 
-    public PngFormat(int width, int height, PngColorType colorType, int bitDepth, boolean linear) {
+    public PngFormat(int width, int height, PngColorType colorType, PngBitDepth bitDepth, boolean linear) {
         Objects.requireNonNull(colorType, "colorType must not be null");
+        Objects.requireNonNull(bitDepth, "bitDepth must not be null");
         if (width <= 0) {
             throw new IllegalArgumentException("width must be greater than 0");
         }
         if (height <= 0) {
             throw new IllegalArgumentException("height must be greater than 0");
         }
-        if (bitDepth != 8 && bitDepth != 16) {
+        if (bitDepth != PngBitDepth.Eight && bitDepth != PngBitDepth.Sixteen) {
             throw new IllegalArgumentException("bitDepth must be 8 or 16");
         }
 
@@ -48,7 +49,7 @@ public final class PngFormat {
         return colorType;
     }
 
-    public int getBitDepth() {
+    public PngBitDepth getBitDepth() {
         return bitDepth;
     }
 
@@ -57,7 +58,7 @@ public final class PngFormat {
     }
 
     public int getBytesPerPixel() {
-        return colorType.channels() * (bitDepth == 8 ? 1 : 2);
+        return colorType.samples() * (bitDepth == PngBitDepth.Eight ? 1 : 2);
     }
 
     public int getBytesPerRow() {
@@ -87,7 +88,7 @@ public final class PngFormat {
         result = 31 * result + Integer.hashCode(width);
         result = 31 * result + Integer.hashCode(height);
         result = 31 * result + colorType.hashCode();
-        result = 31 * result + Integer.hashCode(bitDepth);
+        result = 31 * result + bitDepth.hashCode();
         result = 31 * result + Boolean.hashCode(linear);
         return result;
     }

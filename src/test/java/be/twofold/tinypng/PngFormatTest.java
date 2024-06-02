@@ -3,8 +3,6 @@ package be.twofold.tinypng;
 import nl.jqno.equalsverifier.*;
 import org.junit.jupiter.api.*;
 
-import java.util.*;
-
 import static org.assertj.core.api.Assertions.*;
 
 class PngFormatTest {
@@ -46,18 +44,18 @@ class PngFormatTest {
 
     @Test
     void testThrowsOnBitDepthNot8Or16() {
-        List<Integer> exceptions = Arrays.asList(8, 16);
-        for (int i = 0; i < 100; i++) {
-            int bitDepth = i;
-            if (exceptions.contains(bitDepth)) {
-                assertThatNoException()
-                    .isThrownBy(() -> new PngFormat(1, 1, PngColorType.Gray, bitDepth));
-            } else {
-                assertThatIllegalArgumentException()
-                    .isThrownBy(() -> new PngFormat(1, 1, PngColorType.Gray, bitDepth))
-                    .withMessage("bitDepth must be 8 or 16");
-            }
-        }
+        assertThatIllegalArgumentException()
+            .isThrownBy(() -> new PngFormat(1, 1, PngColorType.Gray, PngBitDepth.One))
+            .withMessage("bitDepth must be 8 or 16");
+        assertThatIllegalArgumentException()
+            .isThrownBy(() -> new PngFormat(1, 1, PngColorType.Gray, PngBitDepth.Two))
+            .withMessage("bitDepth must be 8 or 16");
+        assertThatIllegalArgumentException()
+            .isThrownBy(() -> new PngFormat(1, 1, PngColorType.Gray, PngBitDepth.Four))
+            .withMessage("bitDepth must be 8 or 16");
+        assertThatNoException()
+            .isThrownBy(() -> new PngFormat(1, 1, PngColorType.Gray, PngBitDepth.Eight));
+        assertThatNoException()
+            .isThrownBy(() -> new PngFormat(1, 1, PngColorType.Gray, PngBitDepth.Sixteen));
     }
-
 }

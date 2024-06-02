@@ -3,7 +3,7 @@ package be.twofold.tinypng;
 public enum PngColorType {
     Gray(0, 1),
     Rgb(2, 3),
-    // Palette(3, 1), // Not supported for now
+    Indexed(3, 1), // Not supported for now
     GrayAlpha(4, 2),
     RgbAlpha(6, 4);
 
@@ -19,7 +19,7 @@ public enum PngColorType {
         return code;
     }
 
-    public int channels() {
+    public int samples() {
         return channels;
     }
 }
