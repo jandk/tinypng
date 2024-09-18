@@ -13,10 +13,6 @@ import java.util.zip.*;
  */
 public final class PngEncoder implements AutoCloseable {
     private static final byte[] Magic = new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
-    private static final int IHDR = 0x49484452;
-    private static final int PLTE = 0x504c5445;
-    private static final int IDAT = 0x49444154;
-    private static final int IEND = 0x49454e44;
 
     private final OutputStream output;
     private final PngFormat format;
@@ -70,7 +66,7 @@ public final class PngEncoder implements AutoCloseable {
             .put((byte) 0)
             .put((byte) 0)
             .array();
-        writeChunk(IHDR, chunk);
+        writeChunk(ChunkType.IHDR, chunk);
     }
 
     private void writePLTE() {
@@ -86,31 +82,30 @@ public final class PngEncoder implements AutoCloseable {
             data[i * 3 + 1] = color.green();
             data[i * 3 + 2] = color.blue();
         }
-        writeChunk(PLTE, data);
+        writeChunk(ChunkType.PLTE, data);
     }
 
     private void writeIDAT() {
-        writeChunk(IDAT, idatBuffer, idatLength);
+        writeChunk(ChunkType.IDAT, idatBuffer, idatLength);
         idatLength = 0;
     }
 
     private void writeIEND() {
-        writeChunk(IEND, new byte[0]);
+        writeChunk(ChunkType.IEND, new byte[0]);
     }
 
-    private void writeChunk(int type, byte[] data) {
+    private void writeChunk(ChunkType type, byte[] data) {
         writeChunk(type, data, data.length);
     }
 
-    private void writeChunk(int type, byte[] data, int length) {
-        byte[] rawType = toBytes(type);
+    private void writeChunk(ChunkType type, byte[] data, int length) {
         CRC32 crc32 = new CRC32();
-        crc32.update(rawType, 0, rawType.length);
+        crc32.update(type.bytes(), 0, 4);
         crc32.update(data, 0, length);
 
         try {
             output.write(toBytes(length));
-            output.write(rawType);
+            output.write(type.bytes());
             output.write(data, 0, length);
             output.write(toBytes((int) crc32.getValue()));
         } catch (IOException e) {
