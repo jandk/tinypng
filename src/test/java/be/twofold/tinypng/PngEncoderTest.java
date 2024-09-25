@@ -98,31 +98,31 @@ class PngEncoderTest {
         switch (image.getType()) {
             case BufferedImage.TYPE_CUSTOM:
                 if (image.getColorModel().getNumComponents() == 2 && image.getColorModel().getPixelSize() == 16) {
-                    return PngFormat.of(width, height, PngColorType.GrayAlpha, PngBitDepth.Eight);
+                    return PngFormat.of(width, height, BitDepth.EIGHT, ColorType.GRAYSCALE_ALPHA);
                 }
                 if (image.getColorModel().getNumComponents() == 2 && image.getColorModel().getPixelSize() == 32) {
-                    return PngFormat.of(width, height, PngColorType.GrayAlpha, PngBitDepth.Sixteen);
+                    return PngFormat.of(width, height, BitDepth.SIXTEEN, ColorType.GRAYSCALE_ALPHA);
                 }
                 if (image.getColorModel().getNumComponents() == 3 && image.getColorModel().getPixelSize() == 48) {
-                    return PngFormat.of(width, height, PngColorType.Rgb, PngBitDepth.Sixteen);
+                    return PngFormat.of(width, height, BitDepth.SIXTEEN, ColorType.TRUECOLOR);
                 }
                 if (image.getColorModel().getNumComponents() == 4 && image.getColorModel().getPixelSize() == 64) {
-                    return PngFormat.of(width, height, PngColorType.RgbAlpha, PngBitDepth.Sixteen);
+                    return PngFormat.of(width, height, BitDepth.SIXTEEN, ColorType.TRUECOLOR_ALPHA);
                 }
                 throw new IllegalArgumentException("Unsupported custom image type: " + image.getColorModel());
             case BufferedImage.TYPE_INT_ARGB:
             case BufferedImage.TYPE_4BYTE_ABGR:
-                return PngFormat.of(width, height, PngColorType.RgbAlpha, PngBitDepth.Eight);
+                return PngFormat.of(width, height, BitDepth.EIGHT, ColorType.TRUECOLOR_ALPHA);
             case BufferedImage.TYPE_3BYTE_BGR:
-                return PngFormat.of(width, height, PngColorType.Rgb, PngBitDepth.Eight);
+                return PngFormat.of(width, height, BitDepth.EIGHT, ColorType.TRUECOLOR);
             case BufferedImage.TYPE_BYTE_GRAY:
-                return PngFormat.of(width, height, PngColorType.Gray, PngBitDepth.Eight);
+                return PngFormat.of(width, height, BitDepth.EIGHT, ColorType.GRAYSCALE);
             case BufferedImage.TYPE_USHORT_GRAY:
-                return PngFormat.of(width, height, PngColorType.Gray, PngBitDepth.Sixteen);
+                return PngFormat.of(width, height, BitDepth.SIXTEEN, ColorType.GRAYSCALE);
             case BufferedImage.TYPE_BYTE_BINARY:
-                return PngFormat.of(width, height, PngColorType.Gray, fromDepth(image.getColorModel().getPixelSize()));
+                return PngFormat.of(width, height, fromDepth(image.getColorModel().getPixelSize()), ColorType.GRAYSCALE);
             case BufferedImage.TYPE_BYTE_INDEXED:
-                return PngFormat.indexed(width, height, paletteFrom(image.getColorModel()));
+                return PngFormat.indexed(width, height, BitDepth.EIGHT, paletteFrom(image.getColorModel()));
             default:
                 throw new IllegalArgumentException("Unsupported image type: " + image.getType());
         }
@@ -149,16 +149,16 @@ class PngEncoderTest {
         return new PngPalette(colors);
     }
 
-    private static PngBitDepth fromDepth(int pixelSize) {
+    private static BitDepth fromDepth(int pixelSize) {
         switch (pixelSize) {
             case 1:
-                return PngBitDepth.One;
+                return BitDepth.ONE;
             case 2:
-                return PngBitDepth.Two;
+                return BitDepth.TWO;
             case 4:
-                return PngBitDepth.Four;
+                return BitDepth.FOUR;
             case 8:
-                return PngBitDepth.Eight;
+                return BitDepth.EIGHT;
             default:
                 throw new IllegalArgumentException("Unsupported indexed image depth: " + pixelSize);
         }

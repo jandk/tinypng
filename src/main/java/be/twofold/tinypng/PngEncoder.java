@@ -3,7 +3,6 @@ package be.twofold.tinypng;
 import java.io.*;
 import java.nio.*;
 import java.util.*;
-import java.util.zip.*;
 
 /**
  * This might be a dumb idea, because Java already has a {@link javax.imageio.ImageIO} class.
@@ -12,28 +11,21 @@ import java.util.zip.*;
  * So here we are. Good thing it's not that hard to write a PNG file.
  */
 public final class PngEncoder implements AutoCloseable {
-    private static final byte[] Magic = new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+    private final ChunkWriter chunkWriter;
+    private final IDATWriter idatWriter;
 
-    private final OutputStream output;
     private final PngFormat format;
     private final PngFilter filter;
 
-    // IDAT
-    private final Deflater deflater = new Deflater(Deflater.BEST_SPEED);
-    private final byte[] idatBuffer = new byte[32 * 1024];
-    private int idatLength = 0;
-
     public PngEncoder(OutputStream output, PngFormat format) {
-        this.output = Objects.requireNonNull(output, "output must not be null");
         this.format = Objects.requireNonNull(format, "format must not be null");
+
         this.filter = new PngFilter(format);
-        try {
-            output.write(Magic);
-            writeIHDR();
-            writePLTE();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        this.chunkWriter = new ChunkWriter(output);
+        this.idatWriter = new IDATWriter(chunkWriter);
+
+        writeIHDR();
+        writePLTE();
     }
 
     public void writeImage(byte[] image) {
@@ -50,113 +42,50 @@ public final class PngEncoder implements AutoCloseable {
             throw new IllegalArgumentException("image has wrong size, expected at least " + (offset + format.bytesPerRow()) + " but was " + image.length);
         }
         int filterMethod = filter.filter(image, offset);
-        deflate(new byte[]{(byte) filterMethod}, 0, 1);
-        deflate(filter.bestRow(filterMethod), format.bytesPerPixel(), format.bytesPerRow());
+        idatWriter.write((byte) filterMethod);
+        idatWriter.write(filter.bestRow(filterMethod), format.bytesPerPixel(), format.bytesPerRow());
     }
-
-    // region Chunk writing
 
     private void writeIHDR() {
         byte[] chunk = ByteBuffer.allocate(13)
             .putInt(format.width())
             .putInt(format.height())
-            .put((byte) format.bitDepth().value())
-            .put((byte) format.colorType().code())
+            .put(format.bitDepth().value())
+            .put(format.colorType().value())
             .put((byte) 0)
             .put((byte) 0)
             .put((byte) 0)
             .array();
-        writeChunk(ChunkType.IHDR, chunk);
+        chunkWriter.writeChunk(ChunkType.IHDR, chunk);
     }
 
+    @SuppressWarnings("PointlessArithmeticExpression")
     private void writePLTE() {
-        if (format.colorType() != PngColorType.Indexed) {
+        if (format.palette().isEmpty()) {
             return;
         }
 
-        PngPalette palette = format.palette();
+        var palette = format.palette().get();
         byte[] data = new byte[palette.size() * 3];
         for (int i = 0; i < palette.size(); i++) {
             PngPalette.Color color = palette.get(i);
-            data[i * 3] = color.red();
+            data[i * 3 + 0] = color.red();
             data[i * 3 + 1] = color.green();
             data[i * 3 + 2] = color.blue();
         }
-        writeChunk(ChunkType.PLTE, data);
-    }
-
-    private void writeIDAT() {
-        writeChunk(ChunkType.IDAT, idatBuffer, idatLength);
-        idatLength = 0;
+        chunkWriter.writeChunk(ChunkType.PLTE, data);
     }
 
     private void writeIEND() {
-        writeChunk(ChunkType.IEND, new byte[0]);
+        chunkWriter.writeChunk(ChunkType.IEND, new byte[0]);
     }
-
-    private void writeChunk(ChunkType type, byte[] data) {
-        writeChunk(type, data, data.length);
-    }
-
-    private void writeChunk(ChunkType type, byte[] data, int length) {
-        CRC32 crc32 = new CRC32();
-        crc32.update(type.bytes(), 0, 4);
-        crc32.update(data, 0, length);
-
-        try {
-            output.write(toBytes(length));
-            output.write(type.bytes());
-            output.write(data, 0, length);
-            output.write(toBytes((int) crc32.getValue()));
-        } catch (IOException e) {
-            throw new PngException("Failed to write chunk", e);
-        }
-    }
-
-    private static byte[] toBytes(int value) {
-        return new byte[]{
-            (byte) (value >> 24),
-            (byte) (value >> 16),
-            (byte) (value >> 8),
-            (byte) value
-        };
-    }
-
-    // endregion
-
-    // region Deflate
-
-    private void deflate(byte[] array, int offset, int length) {
-        deflater.setInput(array, offset, length);
-        while (!deflater.needsInput()) {
-            deflate();
-        }
-    }
-
-    private void deflate() {
-        int len = deflater.deflate(idatBuffer, idatLength, idatBuffer.length - idatLength);
-        if (len > 0) {
-            idatLength += len;
-            if (idatLength == idatBuffer.length) {
-                writeIDAT();
-            }
-        }
-    }
-
-    // endregion
 
     @Override
     public void close() {
         try {
-            deflater.finish();
-            while (!deflater.finished()) {
-                deflate();
-            }
-            deflater.end();
-
-            writeIDAT();
+            idatWriter.close();
             writeIEND();
-            output.close();
+            chunkWriter.close();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

@@ -6,8 +6,11 @@ public final class PngPalette extends AbstractList<PngPalette.Color> {
     private final List<Color> colors;
 
     public PngPalette(List<Color> colors) {
+        if (colors.isEmpty()) {
+            throw new IllegalArgumentException("colors cannot be empty");
+        }
         if (colors.size() > 256) {
-            throw new PngException("Palette can only contain up to 256 colors");
+            throw new PngException("colors cannot contain more than 256 colors");
         }
         this.colors = List.copyOf(colors);
     }

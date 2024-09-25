@@ -5,42 +5,42 @@ import java.util.*;
 public final class PngFormat {
     private final int width;
     private final int height;
-    private final PngColorType colorType;
-    private final PngBitDepth bitDepth;
+    private final ColorType colorType;
+    private final BitDepth bitDepth;
     private final PngPalette palette;
 
-    private PngFormat(int width, int height, PngColorType colorType, PngBitDepth bitDepth, PngPalette palette) {
-        Objects.requireNonNull(bitDepth, "bitDepth must not be null");
-        Objects.requireNonNull(colorType, "colorType must not be null");
+    private PngFormat(int width, int height, BitDepth bitDepth, ColorType colorType, PngPalette palette) {
         if (width <= 0) {
             throw new PngException("width must be greater than 0");
         }
         if (height <= 0) {
             throw new PngException("height must be greater than 0");
         }
-        if ((bitDepth == PngBitDepth.One || bitDepth == PngBitDepth.Two || bitDepth == PngBitDepth.Four)
-            && (colorType == PngColorType.Rgb || colorType == PngColorType.GrayAlpha || colorType == PngColorType.RgbAlpha)
-            || (bitDepth == PngBitDepth.Sixteen && colorType == PngColorType.Indexed)
+        Objects.requireNonNull(bitDepth, "bitDepth must not be null");
+        Objects.requireNonNull(colorType, "colorType must not be null");
+        if ((bitDepth == BitDepth.ONE || bitDepth == BitDepth.TWO || bitDepth == BitDepth.FOUR)
+            && (colorType == ColorType.TRUECOLOR || colorType == ColorType.GRAYSCALE_ALPHA || colorType == ColorType.TRUECOLOR_ALPHA)
+            || (bitDepth == BitDepth.SIXTEEN && colorType == ColorType.INDEXED)
         ) {
             throw new PngException("Invalid bit depth " + bitDepth + " for color type " + colorType);
         }
-        if (colorType == PngColorType.Indexed && palette == null) {
+        if (colorType == ColorType.INDEXED && palette == null) {
             throw new PngException("palette must not be null for indexed color type");
         }
 
         this.width = width;
         this.height = height;
-        this.colorType = colorType;
         this.bitDepth = bitDepth;
+        this.colorType = colorType;
         this.palette = palette;
     }
 
-    public static PngFormat of(int width, int height, PngColorType colorType, PngBitDepth bitDepth) {
-        return new PngFormat(width, height, colorType, bitDepth, null);
+    public static PngFormat of(int width, int height, BitDepth bitDepth, ColorType colorType) {
+        return new PngFormat(width, height, bitDepth, colorType, null);
     }
 
-    public static PngFormat indexed(int width, int height, PngPalette palette) {
-        return new PngFormat(width, height, PngColorType.Indexed, PngBitDepth.Eight, palette);
+    public static PngFormat indexed(int width, int height, BitDepth bitDepth, PngPalette palette) {
+        return new PngFormat(width, height, BitDepth.EIGHT, ColorType.INDEXED, palette);
     }
 
     public int width() {
@@ -51,32 +51,25 @@ public final class PngFormat {
         return height;
     }
 
-    public PngColorType colorType() {
+    public ColorType colorType() {
         return colorType;
     }
 
-    public PngBitDepth bitDepth() {
+    public BitDepth bitDepth() {
         return bitDepth;
     }
 
-    public PngPalette palette() {
-        return palette;
+    public Optional<PngPalette> palette() {
+        return Optional.ofNullable(palette);
     }
 
     public int bytesPerPixel() {
-        return colorType.samples() * ((bitDepth.value() + 7) >>> 3);
+        return colorType.samples() * ((bitDepth.value() + 7) >> 3);
     }
 
     public int bytesPerRow() {
         int samples = width * colorType.samples();
-        switch (bitDepth) {
-            case Eight:
-                return samples;
-            case Sixteen:
-                return samples * 2;
-            default:
-                return (samples * bitDepth.value()) + 7 >>> 3;
-        }
+        return ((samples * bitDepth.value()) + 7) >>> 3;
     }
 
     public int bytesPerImage() {
