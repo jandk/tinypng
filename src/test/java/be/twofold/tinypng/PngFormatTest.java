@@ -14,20 +14,20 @@ class PngFormatTest {
     @Test
     void testThrowsOnZeroOrNegativeWidth() {
         assertThatExceptionOfType(PngException.class)
-            .isThrownBy(() -> PngFormat.of(0, 1, BitDepth.EIGHT, ColorType.GRAYSCALE))
+            .isThrownBy(() -> PngFormat.of(0, 1, BitDepth.EIGHT, ColorType.GRAY))
             .withMessage("width must be greater than 0");
         assertThatExceptionOfType(PngException.class)
-            .isThrownBy(() -> PngFormat.of(-1, 1, BitDepth.EIGHT, ColorType.GRAYSCALE))
+            .isThrownBy(() -> PngFormat.of(-1, 1, BitDepth.EIGHT, ColorType.GRAY))
             .withMessage("width must be greater than 0");
     }
 
     @Test
     void testThrowsOnZeroOrNegativeHeight() {
         assertThatExceptionOfType(PngException.class)
-            .isThrownBy(() -> PngFormat.of(1, 0, BitDepth.EIGHT, ColorType.GRAYSCALE))
+            .isThrownBy(() -> PngFormat.of(1, 0, BitDepth.EIGHT, ColorType.GRAY))
             .withMessage("height must be greater than 0");
         assertThatExceptionOfType(PngException.class)
-            .isThrownBy(() -> PngFormat.of(1, -1, BitDepth.EIGHT, ColorType.GRAYSCALE))
+            .isThrownBy(() -> PngFormat.of(1, -1, BitDepth.EIGHT, ColorType.GRAY))
             .withMessage("height must be greater than 0");
     }
 
@@ -41,7 +41,7 @@ class PngFormatTest {
     @Test
     void testThrowsOnNullBitDepth() {
         assertThatNullPointerException()
-            .isThrownBy(() -> PngFormat.of(1, 1, null, ColorType.GRAYSCALE))
+            .isThrownBy(() -> PngFormat.of(1, 1, null, ColorType.GRAY))
             .withMessage("bitDepth must not be null");
     }
 
@@ -69,31 +69,31 @@ class PngFormatTest {
 
     private static Stream<Arguments> provideBitDepthAndColorTypeCombinations() {
         return Stream.of(
-            Arguments.of(BitDepth.ONE, ColorType.GRAYSCALE, true),
-            Arguments.of(BitDepth.ONE, ColorType.TRUECOLOR, false),
+            Arguments.of(BitDepth.ONE, ColorType.GRAY, true),
+            Arguments.of(BitDepth.ONE, ColorType.RGB, false),
             Arguments.of(BitDepth.ONE, ColorType.INDEXED, true),
-            Arguments.of(BitDepth.ONE, ColorType.GRAYSCALE_ALPHA, false),
-            Arguments.of(BitDepth.ONE, ColorType.TRUECOLOR_ALPHA, false),
-            Arguments.of(BitDepth.TWO, ColorType.GRAYSCALE, true),
-            Arguments.of(BitDepth.TWO, ColorType.TRUECOLOR, false),
+            Arguments.of(BitDepth.ONE, ColorType.GRAY_ALPHA, false),
+            Arguments.of(BitDepth.ONE, ColorType.RGB_ALPHA, false),
+            Arguments.of(BitDepth.TWO, ColorType.GRAY, true),
+            Arguments.of(BitDepth.TWO, ColorType.RGB, false),
             Arguments.of(BitDepth.TWO, ColorType.INDEXED, true),
-            Arguments.of(BitDepth.TWO, ColorType.GRAYSCALE_ALPHA, false),
-            Arguments.of(BitDepth.TWO, ColorType.TRUECOLOR_ALPHA, false),
-            Arguments.of(BitDepth.FOUR, ColorType.GRAYSCALE, true),
-            Arguments.of(BitDepth.FOUR, ColorType.TRUECOLOR, false),
+            Arguments.of(BitDepth.TWO, ColorType.GRAY_ALPHA, false),
+            Arguments.of(BitDepth.TWO, ColorType.RGB_ALPHA, false),
+            Arguments.of(BitDepth.FOUR, ColorType.GRAY, true),
+            Arguments.of(BitDepth.FOUR, ColorType.RGB, false),
             Arguments.of(BitDepth.FOUR, ColorType.INDEXED, true),
-            Arguments.of(BitDepth.FOUR, ColorType.GRAYSCALE_ALPHA, false),
-            Arguments.of(BitDepth.FOUR, ColorType.TRUECOLOR_ALPHA, false),
-            Arguments.of(BitDepth.EIGHT, ColorType.GRAYSCALE, true),
-            Arguments.of(BitDepth.EIGHT, ColorType.TRUECOLOR, true),
+            Arguments.of(BitDepth.FOUR, ColorType.GRAY_ALPHA, false),
+            Arguments.of(BitDepth.FOUR, ColorType.RGB_ALPHA, false),
+            Arguments.of(BitDepth.EIGHT, ColorType.GRAY, true),
+            Arguments.of(BitDepth.EIGHT, ColorType.RGB, true),
             Arguments.of(BitDepth.EIGHT, ColorType.INDEXED, true),
-            Arguments.of(BitDepth.EIGHT, ColorType.GRAYSCALE_ALPHA, true),
-            Arguments.of(BitDepth.EIGHT, ColorType.TRUECOLOR_ALPHA, true),
-            Arguments.of(BitDepth.SIXTEEN, ColorType.GRAYSCALE, true),
-            Arguments.of(BitDepth.SIXTEEN, ColorType.TRUECOLOR, true),
+            Arguments.of(BitDepth.EIGHT, ColorType.GRAY_ALPHA, true),
+            Arguments.of(BitDepth.EIGHT, ColorType.RGB_ALPHA, true),
+            Arguments.of(BitDepth.SIXTEEN, ColorType.GRAY, true),
+            Arguments.of(BitDepth.SIXTEEN, ColorType.RGB, true),
             Arguments.of(BitDepth.SIXTEEN, ColorType.INDEXED, false),
-            Arguments.of(BitDepth.SIXTEEN, ColorType.GRAYSCALE_ALPHA, true),
-            Arguments.of(BitDepth.SIXTEEN, ColorType.TRUECOLOR_ALPHA, true)
+            Arguments.of(BitDepth.SIXTEEN, ColorType.GRAY_ALPHA, true),
+            Arguments.of(BitDepth.SIXTEEN, ColorType.RGB_ALPHA, true)
         );
     }
 }

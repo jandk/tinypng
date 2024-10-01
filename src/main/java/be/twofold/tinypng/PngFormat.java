@@ -5,8 +5,8 @@ import java.util.*;
 public final class PngFormat {
     private final int width;
     private final int height;
-    private final ColorType colorType;
     private final BitDepth bitDepth;
+    private final ColorType colorType;
     private final PngPalette palette;
 
     private PngFormat(int width, int height, BitDepth bitDepth, ColorType colorType, PngPalette palette) {
@@ -19,13 +19,13 @@ public final class PngFormat {
         Objects.requireNonNull(bitDepth, "bitDepth must not be null");
         Objects.requireNonNull(colorType, "colorType must not be null");
         if ((bitDepth == BitDepth.ONE || bitDepth == BitDepth.TWO || bitDepth == BitDepth.FOUR)
-            && (colorType == ColorType.TRUECOLOR || colorType == ColorType.GRAYSCALE_ALPHA || colorType == ColorType.TRUECOLOR_ALPHA)
+            && (colorType == ColorType.RGB || colorType == ColorType.GRAY_ALPHA || colorType == ColorType.RGB_ALPHA)
             || (bitDepth == BitDepth.SIXTEEN && colorType == ColorType.INDEXED)
         ) {
             throw new PngException("Invalid bit depth " + bitDepth + " for color type " + colorType);
         }
         if (colorType == ColorType.INDEXED && palette == null) {
-            throw new PngException("palette must not be null for indexed color type");
+            throw new PngException("palette must not be null for colorType indexed");
         }
 
         this.width = width;
@@ -74,6 +74,14 @@ public final class PngFormat {
 
     public int bytesPerImage() {
         return bytesPerRow() * height;
+    }
+
+    PngFormat withBitDepth(BitDepth bitDepth) {
+        return new PngFormat(width, height, bitDepth, colorType, palette);
+    }
+
+    PngFormat withColorType(ColorType colorType) {
+        return new PngFormat(width, height, bitDepth, colorType, palette);
     }
 
     @Override
