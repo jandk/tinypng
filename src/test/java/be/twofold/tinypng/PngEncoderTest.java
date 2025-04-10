@@ -42,8 +42,11 @@ class PngEncoderTest {
         byte[] expected = decode(source);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try (PngEncoder encoder = new PngEncoder(out, fromImage(source))) {
-            encoder.writeImage(expected);
+        PngFormat format = fromImage(source);
+        Optimizer optimizer = new Optimizer(format);
+        byte[] optimized = optimizer.optimize(expected);
+        try (PngEncoder encoder = new PngEncoder(out, optimizer.format())) {
+            encoder.writeHeader().writeImage(optimized);
         }
 
         byte[] encoded = out.toByteArray();

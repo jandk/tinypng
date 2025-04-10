@@ -11,39 +11,19 @@ import java.util.*;
  * So here we are. Good thing it's not that hard to write a PNG file.
  */
 public final class PngEncoder implements AutoCloseable {
-    private final ChunkWriter chunkWriter;
-    private final IDATWriter idatWriter;
-
     private final PngFormat format;
-    private final PngFilter filter;
+    private final ChunkWriter writer;
 
     public PngEncoder(OutputStream output, PngFormat format) {
         this.format = Objects.requireNonNull(format, "format must not be null");
+        this.writer = new ChunkWriter(output);
+    }
 
-        this.filter = new PngFilter(format);
-        this.chunkWriter = new ChunkWriter(output);
-        this.idatWriter = new IDATWriter(chunkWriter);
-
+    public PngWriter writeHeader() {
         writeIHDR();
         writePLTE();
-    }
 
-    public void writeImage(byte[] image) {
-        if (image.length != format.bytesPerImage()) {
-            throw new IllegalArgumentException("image has wrong size, expected " + format.bytesPerImage() + " but was " + image.length);
-        }
-        for (int y = 0; y < format.height(); y++) {
-            writeRow(image, y * format.bytesPerRow());
-        }
-    }
-
-    private void writeRow(byte[] image, int offset) {
-        if (offset + format.bytesPerRow() > image.length) {
-            throw new IllegalArgumentException("image has wrong size, expected at least " + (offset + format.bytesPerRow()) + " but was " + image.length);
-        }
-        int filterMethod = filter.filter(image, offset);
-        idatWriter.write((byte) filterMethod);
-        idatWriter.write(filter.bestRow(filterMethod), format.bytesPerPixel(), format.bytesPerRow());
+        return new PngWriter(format, writer);
     }
 
     private void writeIHDR() {
@@ -56,7 +36,7 @@ public final class PngEncoder implements AutoCloseable {
             .put((byte) 0)
             .put((byte) 0)
             .array();
-        chunkWriter.writeChunk(ChunkType.IHDR, chunk);
+        writer.writeChunk(ChunkType.IHDR, chunk);
     }
 
     @SuppressWarnings("PointlessArithmeticExpression")
@@ -73,19 +53,18 @@ public final class PngEncoder implements AutoCloseable {
             data[i * 3 + 1] = color.green();
             data[i * 3 + 2] = color.blue();
         }
-        chunkWriter.writeChunk(ChunkType.PLTE, data);
+        writer.writeChunk(ChunkType.PLTE, data);
     }
 
     private void writeIEND() {
-        chunkWriter.writeChunk(ChunkType.IEND, new byte[0]);
+        writer.writeChunk(ChunkType.IEND, new byte[0]);
     }
 
     @Override
     public void close() {
         try {
-            idatWriter.close();
             writeIEND();
-            chunkWriter.close();
+            writer.close();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

@@ -63,13 +63,17 @@ public final class PngFormat {
         return Optional.ofNullable(palette);
     }
 
+    public int bytesPerChannel() {
+        return (bitDepth.value() + 7) / 8;
+    }
+
     public int bytesPerPixel() {
-        return colorType.samples() * ((bitDepth.value() + 7) >> 3);
+        return colorType.samples() * bytesPerChannel();
     }
 
     public int bytesPerRow() {
-        int samples = width * colorType.samples();
-        return ((samples * bitDepth.value()) + 7) >>> 3;
+        var bitsPerRow = width * colorType.samples() * bitDepth.value();
+        return (bitsPerRow + 7) / 8;
     }
 
     public int bytesPerImage() {
