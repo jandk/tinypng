@@ -23,7 +23,7 @@ final class Optimizer {
 
         reduced = removeOpaqueAlpha(data);
         if (reduced.isPresent()) {
-            format = format.withColorType(format.colorType() == ColorType.RGB_ALPHA ? ColorType.RGB : ColorType.GRAY);
+            format = format.withColorType(format.getColorType() == ColorType.RGB_ALPHA ? ColorType.RGB : ColorType.GRAY);
             data = reduced.get();
         }
 
@@ -31,7 +31,7 @@ final class Optimizer {
     }
 
     private Optional<byte[]> reduceBitDepth16To8(byte[] data) {
-        if (format.bitDepth() != 16) {
+        if (format.getBitDepth() != 16) {
             return Optional.empty();
         }
 
@@ -51,12 +51,12 @@ final class Optimizer {
 
     private Optional<byte[]> removeOpaqueAlpha(byte[] data) {
         // Implies a bit depth of 8 or 16
-        if (format.colorType() != ColorType.GRAY_ALPHA && format.colorType() != ColorType.RGB_ALPHA) {
+        if (format.getColorType() != ColorType.GRAY_ALPHA && format.getColorType() != ColorType.RGB_ALPHA) {
             return Optional.empty();
         }
 
-        int bytesPerPixel = format.bytesPerPixel();
-        int bytesPerChannel = format.bytesPerChannel();
+        int bytesPerPixel = format.getBytesPerPixel();
+        int bytesPerChannel = format.getBytesPerChannel();
         int colorSize = bytesPerPixel - bytesPerChannel;
         byte[] reduced = new byte[data.length / bytesPerPixel * colorSize];
         for (int i = 0, o = 0; i < data.length; i += bytesPerPixel) {

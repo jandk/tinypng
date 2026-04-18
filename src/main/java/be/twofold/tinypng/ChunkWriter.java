@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
-final class ChunkWriter implements AutoCloseable {
+final class ChunkWriter implements Closeable {
     private static final byte[] MAGIC = new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
 
     static final int IHDR = 'I' << 24 | 'H' << 16 | 'D' << 8 | 'R';
@@ -15,20 +15,16 @@ final class ChunkWriter implements AutoCloseable {
     private final CRC32 crc = new CRC32();
     private final OutputStream output;
 
-    ChunkWriter(OutputStream output) {
+    ChunkWriter(OutputStream output) throws IOException {
         this.output = Objects.requireNonNull(output);
-        try {
-            output.write(MAGIC);
-        } catch (IOException e) {
-            throw new PngException("Failed to write magic", e);
-        }
+        output.write(MAGIC);
     }
 
-    void writeChunk(int type, byte[] data) {
+    void writeChunk(int type, byte[] data) throws IOException {
         writeChunk(type, data, data.length);
     }
 
-    void writeChunk(int type, byte[] data, int length) {
+    void writeChunk(int type, byte[] data, int length) throws IOException {
         crc.reset();
         crc.update(type >> 24);
         crc.update(type >> 16);
@@ -36,14 +32,10 @@ final class ChunkWriter implements AutoCloseable {
         crc.update(type);
         crc.update(data, 0, length);
 
-        try {
-            writeBytesBE(length);
-            writeBytesBE(type);
-            output.write(data, 0, length);
-            writeBytesBE((int) crc.getValue());
-        } catch (IOException e) {
-            throw new PngException("Failed to write chunk", e);
-        }
+        writeBytesBE(length);
+        writeBytesBE(type);
+        output.write(data, 0, length);
+        writeBytesBE((int) crc.getValue());
     }
 
     private void writeBytesBE(int value) throws IOException {

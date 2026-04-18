@@ -11,9 +11,9 @@ final class PngFilter {
 
     PngFilter(PngFormat format) {
         this.format = Objects.requireNonNull(format, "format must not be null");
-        this.filtered = new byte[5][format.bytesPerPixel() + format.bytesPerRow()];
-        this.previous = new byte[format.bytesPerPixel() + format.bytesPerRow()];
-        this.current = new byte[format.bytesPerPixel() + format.bytesPerRow()];
+        this.filtered = new byte[5][format.getBytesPerPixel() + format.getBytesPerRow()];
+        this.previous = new byte[format.getBytesPerPixel() + format.getBytesPerRow()];
+        this.current = new byte[format.getBytesPerPixel() + format.getBytesPerRow()];
     }
 
     public byte[] bestRow(int method) {
@@ -21,8 +21,8 @@ final class PngFilter {
     }
 
     int filter(byte[] row, int offset) {
-        int bpp = format.bytesPerPixel();
-        int bpr = format.bytesPerRow();
+        int bpp = format.getBytesPerPixel();
+        int bpr = format.getBytesPerRow();
 
         byte[] nRow = filtered[0];
         byte[] sRow = filtered[1];

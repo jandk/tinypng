@@ -1,9 +1,10 @@
 package be.twofold.tinypng;
 
+import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
-final class IDATWriter implements AutoCloseable {
+final class IDATWriter implements Closeable {
     private final Deflater deflater = new Deflater(Deflater.BEST_SPEED);
     private final byte[] buffer = new byte[32 * 1024];
     private final byte[] single = new byte[1];
@@ -15,19 +16,19 @@ final class IDATWriter implements AutoCloseable {
         this.chunkWriter = Objects.requireNonNull(chunkWriter);
     }
 
-    void write(byte value) {
+    void write(byte value) throws IOException {
         single[0] = value;
         write(single, 0, 1);
     }
 
-    void write(byte[] bytes, int offset, int length) {
+    void write(byte[] bytes, int offset, int length) throws IOException {
         deflater.setInput(bytes, offset, length);
         while (!deflater.needsInput()) {
             deflate();
         }
     }
 
-    private void deflate() {
+    private void deflate() throws IOException {
         int len = deflater.deflate(buffer, length, buffer.length - length);
         if (len > 0) {
             length += len;
@@ -37,7 +38,7 @@ final class IDATWriter implements AutoCloseable {
         }
     }
 
-    private void writeIDAT() {
+    private void writeIDAT() throws IOException {
         if (length == 0) {
             return;
         }
@@ -46,7 +47,7 @@ final class IDATWriter implements AutoCloseable {
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
         deflater.finish();
         while (!deflater.finished()) {
             deflate();

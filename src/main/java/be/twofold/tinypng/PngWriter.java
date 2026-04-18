@@ -1,5 +1,6 @@
 package be.twofold.tinypng;
 
+import java.io.*;
 import java.util.*;
 
 /**
@@ -7,7 +8,7 @@ import java.util.*;
  * <p>
  * For now, only a single image is supported
  */
-public final class PngWriter implements AutoCloseable {
+public final class PngWriter implements Closeable {
     private final PngFormat format;
     private final PngFilter filter;
     private IDATWriter writer;
@@ -23,18 +24,18 @@ public final class PngWriter implements AutoCloseable {
      *
      * @param image The image to write
      */
-    public void writeImage(byte[] image) {
+    public void writeImage(byte[] image) throws IOException {
         if (writer == null) {
             throw new IllegalStateException("Image has already been written");
         }
-        if (image.length != format.bytesPerImage()) {
-            throw new IllegalArgumentException("image has wrong size, expected " + format.bytesPerImage() + " but was " + image.length);
+        if (image.length != format.getBytesPerImage()) {
+            throw new IllegalArgumentException("image has wrong size, expected " + format.getBytesPerImage() + " but was " + image.length);
         }
 
-        for (int row = 0; row < format.height(); row++) {
-            int filterMethod = filter.filter(image, row * format.bytesPerRow());
+        for (int row = 0; row < format.getHeight(); row++) {
+            int filterMethod = filter.filter(image, row * format.getBytesPerRow());
             writer.write((byte) filterMethod);
-            writer.write(filter.bestRow(filterMethod), format.bytesPerPixel(), format.bytesPerRow());
+            writer.write(filter.bestRow(filterMethod), format.getBytesPerPixel(), format.getBytesPerRow());
         }
 
         writer.close();
@@ -42,7 +43,10 @@ public final class PngWriter implements AutoCloseable {
     }
 
     @Override
-    public void close() {
-        writer.close();
+    public void close() throws IOException {
+        if (writer != null) {
+            writer.close();
+            writer = null;
+        }
     }
 }

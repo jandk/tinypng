@@ -12,20 +12,20 @@ class PngFormatTest {
 
     @Test
     void testThrowsOnZeroOrNegativeWidth() {
-        assertThatExceptionOfType(PngException.class)
+        assertThatExceptionOfType(IllegalArgumentException.class)
             .isThrownBy(() -> PngFormat.of(0, 1, ColorType.GRAY, 8))
             .withMessage("width must be greater than 0");
-        assertThatExceptionOfType(PngException.class)
+        assertThatExceptionOfType(IllegalArgumentException.class)
             .isThrownBy(() -> PngFormat.of(-1, 1, ColorType.GRAY, 8))
             .withMessage("width must be greater than 0");
     }
 
     @Test
     void testThrowsOnZeroOrNegativeHeight() {
-        assertThatExceptionOfType(PngException.class)
+        assertThatExceptionOfType(IllegalArgumentException.class)
             .isThrownBy(() -> PngFormat.of(1, 0, ColorType.GRAY, 8))
             .withMessage("height must be greater than 0");
-        assertThatExceptionOfType(PngException.class)
+        assertThatExceptionOfType(IllegalArgumentException.class)
             .isThrownBy(() -> PngFormat.of(1, -1, ColorType.GRAY, 8))
             .withMessage("height must be greater than 0");
     }
@@ -39,29 +39,29 @@ class PngFormatTest {
 
     @Test
     void testThrowsOnInvalidBitDepth() {
-        assertThatExceptionOfType(PngException.class)
+        assertThatExceptionOfType(IllegalArgumentException.class)
             .isThrownBy(() -> PngFormat.of(1, 1, ColorType.GRAY, 3))
-            .withMessage("Invalid bit depth: 3");
+            .withMessage("Invalid bit depth 3 for color type GRAY");
     }
 
     @ParameterizedTest
     @MethodSource("provideBitDepthAndColorTypeCombinations")
-    void testThrowsOnInvalidBitDepthAndColourTypeCombination(int bitDepth, ColorType colorType, boolean valid) {
+    void testThrowsOnInvalidBitDepthAndColourTypeCombination(ColorType colorType, int bitDepth, boolean valid) {
         if (valid) {
             assertThatNoException()
                 .isThrownBy(() -> createFormat(colorType, bitDepth));
         } else {
-            assertThatExceptionOfType(PngException.class)
+            assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> createFormat(colorType, bitDepth))
                 .withMessage("Invalid bit depth " + bitDepth + " for color type " + colorType);
         }
     }
 
-    private static PngFormat createFormat(ColorType colorType, int bitDepth) {
+    private static void createFormat(ColorType colorType, int bitDepth) {
         if (colorType == ColorType.INDEXED && bitDepth != 16) {
-            return PngFormat.indexed(1, 1, bitDepth, new byte[]{0, 0, 0});
+            PngFormat.indexed(1, 1, bitDepth, new byte[]{0, 0, 0});
         } else {
-            return PngFormat.of(1, 1, colorType, bitDepth);
+            PngFormat.of(1, 1, colorType, bitDepth);
         }
     }
 
