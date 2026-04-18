@@ -39,7 +39,7 @@ public final class PngFormat {
         return new PngFormat(width, height, bitDepth, colorType, null);
     }
 
-    public static PngFormat indexed(int width, int height, BitDepth bitDepth, PngPalette palette) {
+    public static PngFormat indexed(int width, int height, PngPalette palette) {
         return new PngFormat(width, height, BitDepth.EIGHT, ColorType.INDEXED, palette);
     }
 

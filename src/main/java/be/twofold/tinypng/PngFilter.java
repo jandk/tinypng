@@ -41,7 +41,7 @@ final class PngFilter {
             nRow[i] = (byte) (x);
             sRow[i] = (byte) (x - a);
             uRow[i] = (byte) (x - b);
-            aRow[i] = (byte) (x - (a + b >> 1));
+            aRow[i] = (byte) (x - ((a + b) >> 1));
             pRow[i] = (byte) (x - paeth(a, b, c));
         }
 

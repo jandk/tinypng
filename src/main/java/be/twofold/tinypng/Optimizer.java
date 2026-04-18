@@ -46,7 +46,6 @@ final class Optimizer {
             reduced[o] = data[i];
         }
 
-        System.out.println("Reduced 16 bits to 8 bits");
         return Optional.of(reduced);
     }
 
@@ -62,7 +61,7 @@ final class Optimizer {
         byte[] reduced = new byte[data.length / bytesPerPixel * colorSize];
         for (int i = 0, o = 0; i < data.length; i += bytesPerPixel) {
             for (int j = 0; j < bytesPerChannel; j++) {
-                if (data[i + colorSize + j] != Byte.MAX_VALUE) {
+                if (data[i + colorSize + j] != (byte) 0xFF) {
                     return Optional.empty();
                 }
             }

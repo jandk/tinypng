@@ -61,7 +61,7 @@ class PngFormatTest {
     private static PngFormat createFormat(BitDepth bitDepth, ColorType colorType) {
         if (colorType == ColorType.INDEXED && bitDepth != BitDepth.SIXTEEN) {
             PngPalette palette = new PngPalette(List.of(new PngPalette.Color(0, 0, 0)));
-            return PngFormat.indexed(1, 1, BitDepth.EIGHT, palette);
+            return PngFormat.indexed(1, 1, palette);
         } else {
             return PngFormat.of(1, 1, bitDepth, colorType);
         }

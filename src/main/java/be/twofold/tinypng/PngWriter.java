@@ -7,7 +7,7 @@ import java.util.*;
  * <p>
  * For now, only a single image is supported
  */
-public final class PngWriter {
+public final class PngWriter implements AutoCloseable {
     private final PngFormat format;
     private final PngFilter filter;
     private IDATWriter writer;
@@ -39,5 +39,10 @@ public final class PngWriter {
 
         writer.close();
         writer = null;
+    }
+
+    @Override
+    public void close() {
+        writer.close();
     }
 }

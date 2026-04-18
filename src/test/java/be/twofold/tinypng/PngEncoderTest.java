@@ -125,7 +125,7 @@ class PngEncoderTest {
             case BufferedImage.TYPE_BYTE_BINARY:
                 return PngFormat.of(width, height, fromDepth(image.getColorModel().getPixelSize()), ColorType.GRAY);
             case BufferedImage.TYPE_BYTE_INDEXED:
-                return PngFormat.indexed(width, height, BitDepth.EIGHT, paletteFrom(image.getColorModel()));
+                return PngFormat.indexed(width, height, paletteFrom(image.getColorModel()));
             default:
                 throw new IllegalArgumentException("Unsupported image type: " + image.getType());
         }

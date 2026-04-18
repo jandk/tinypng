@@ -5,14 +5,24 @@ import java.nio.*;
 import java.util.*;
 
 /**
- * This might be a dumb idea, because Java already has a {@link javax.imageio.ImageIO} class.
- * But there's a bug in the PNG writer that causes it to use the wrong filter type.
+ * Encodes PNG image data and writes it to an OutputStream.
+ * This class is responsible for writing the PNG signature, header, optional palette data,
+ * and closing the file with terminating data.
  * <p>
- * So here we are. Good thing it's not that hard to write a PNG file.
+ * Instances of this class allow the creation of a PNG file by taking
+ * a {@link PngFormat} configuration and handling the required chunks.
+ * <p>
+ * The usage involves writing the header first, followed by image data through a {@link PngWriter}.
+ * The PNG stream is properly terminated upon calling {@link #close()}.
+ * <p>
+ * This class is not thread-safe and should be used in a single-threaded context.
+ * <p>
+ * Implements {@link AutoCloseable} to ensure proper resource management.
  */
 public final class PngEncoder implements AutoCloseable {
     private final PngFormat format;
     private final ChunkWriter writer;
+    private boolean headerWritten;
 
     public PngEncoder(OutputStream output, PngFormat format) {
         this.format = Objects.requireNonNull(format, "format must not be null");
@@ -20,8 +30,13 @@ public final class PngEncoder implements AutoCloseable {
     }
 
     public PngWriter writeHeader() {
+        if (headerWritten) {
+            throw new IllegalStateException("Header already written");
+        }
+
         writeIHDR();
         writePLTE();
+        this.headerWritten = true;
 
         return new PngWriter(format, writer);
     }
@@ -63,7 +78,9 @@ public final class PngEncoder implements AutoCloseable {
     @Override
     public void close() {
         try {
-            writeIEND();
+            if (headerWritten) {
+                writeIEND();
+            }
             writer.close();
         } catch (IOException e) {
             throw new UncheckedIOException(e);

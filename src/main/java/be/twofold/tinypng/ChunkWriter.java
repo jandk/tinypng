@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.zip.*;
 
 final class ChunkWriter implements AutoCloseable {
-    private static final byte[] Magic = new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+    private static final byte[] MAGIC = new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
 
     private final CRC32 crc = new CRC32();
     private final OutputStream output;
@@ -13,7 +13,7 @@ final class ChunkWriter implements AutoCloseable {
     ChunkWriter(OutputStream output) {
         this.output = Objects.requireNonNull(output);
         try {
-            output.write(Magic);
+            output.write(MAGIC);
         } catch (IOException e) {
             throw new PngException("Failed to write magic", e);
         }
