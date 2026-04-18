@@ -1,7 +1,5 @@
 package be.twofold.tinypng;
 
-import java.util.*;
-
 /**
  * Specifies what type of pixels are represented
  */
@@ -45,22 +43,5 @@ public enum ColorType {
 
     int samples() {
         return samples;
-    }
-
-    static Optional<ColorType> fromValue(byte value) {
-        switch (value) {
-            case 0:
-                return Optional.of(GRAY);
-            case 2:
-                return Optional.of(RGB);
-            case 3:
-                return Optional.of(INDEXED);
-            case 4:
-                return Optional.of(GRAY_ALPHA);
-            case 6:
-                return Optional.of(RGB_ALPHA);
-            default:
-                return Optional.empty();
-        }
     }
 }

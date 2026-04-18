@@ -45,34 +45,21 @@ public final class PngEncoder implements AutoCloseable {
         byte[] chunk = ByteBuffer.allocate(13)
             .putInt(format.width())
             .putInt(format.height())
-            .put(format.bitDepth().value())
+            .put((byte) format.bitDepth())
             .put(format.colorType().value())
             .put((byte) 0)
             .put((byte) 0)
             .put((byte) 0)
             .array();
-        writer.writeChunk(ChunkType.IHDR, chunk);
+        writer.writeChunk(ChunkWriter.IHDR, chunk);
     }
 
-    @SuppressWarnings("PointlessArithmeticExpression")
     private void writePLTE() {
-        if (format.palette().isEmpty()) {
-            return;
-        }
-
-        var palette = format.palette().get();
-        byte[] data = new byte[palette.size() * 3];
-        for (int i = 0; i < palette.size(); i++) {
-            PngPalette.Color color = palette.get(i);
-            data[i * 3 + 0] = color.red();
-            data[i * 3 + 1] = color.green();
-            data[i * 3 + 2] = color.blue();
-        }
-        writer.writeChunk(ChunkType.PLTE, data);
+        format.palette().ifPresent(palette -> writer.writeChunk(ChunkWriter.PLTE, palette));
     }
 
     private void writeIEND() {
-        writer.writeChunk(ChunkType.IEND, new byte[0]);
+        writer.writeChunk(ChunkWriter.IEND, new byte[0]);
     }
 
     @Override

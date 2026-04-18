@@ -17,7 +17,7 @@ final class Optimizer {
         // Reduce 16 bits to 8 bits
         var reduced = reduceBitDepth16To8(data);
         if (reduced.isPresent()) {
-            format = format.withBitDepth(BitDepth.EIGHT);
+            format = format.withBitDepth(8);
             data = reduced.get();
         }
 
@@ -31,7 +31,7 @@ final class Optimizer {
     }
 
     private Optional<byte[]> reduceBitDepth16To8(byte[] data) {
-        if (format.bitDepth() != BitDepth.SIXTEEN) {
+        if (format.bitDepth() != 16) {
             return Optional.empty();
         }
 

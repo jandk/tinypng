@@ -41,7 +41,7 @@ final class IDATWriter implements AutoCloseable {
         if (length == 0) {
             return;
         }
-        chunkWriter.writeChunk(ChunkType.IDAT, buffer, length);
+        chunkWriter.writeChunk(ChunkWriter.IDAT, buffer, length);
         length = 0;
     }
 

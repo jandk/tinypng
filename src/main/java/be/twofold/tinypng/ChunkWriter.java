@@ -7,6 +7,11 @@ import java.util.zip.*;
 final class ChunkWriter implements AutoCloseable {
     private static final byte[] MAGIC = new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
 
+    static final int IHDR = 'I' << 24 | 'H' << 16 | 'D' << 8 | 'R';
+    static final int PLTE = 'P' << 24 | 'L' << 16 | 'T' << 8 | 'E';
+    static final int IDAT = 'I' << 24 | 'D' << 16 | 'A' << 8 | 'T';
+    static final int IEND = 'I' << 24 | 'E' << 16 | 'N' << 8 | 'D';
+
     private final CRC32 crc = new CRC32();
     private final OutputStream output;
 
@@ -19,32 +24,33 @@ final class ChunkWriter implements AutoCloseable {
         }
     }
 
-    void writeChunk(ChunkType type, byte[] data) {
+    void writeChunk(int type, byte[] data) {
         writeChunk(type, data, data.length);
     }
 
-    void writeChunk(ChunkType type, byte[] data, int length) {
+    void writeChunk(int type, byte[] data, int length) {
         crc.reset();
-        crc.update(type.bytes(), 0, 4);
+        crc.update(type >> 24);
+        crc.update(type >> 16);
+        crc.update(type >> 8);
+        crc.update(type);
         crc.update(data, 0, length);
 
         try {
-            output.write(toBytesBE(length));
-            output.write(type.bytes());
+            writeBytesBE(length);
+            writeBytesBE(type);
             output.write(data, 0, length);
-            output.write(toBytesBE((int) crc.getValue()));
+            writeBytesBE((int) crc.getValue());
         } catch (IOException e) {
             throw new PngException("Failed to write chunk", e);
         }
     }
 
-    private byte[] toBytesBE(int value) {
-        return new byte[]{
-            (byte) (value >> 24),
-            (byte) (value >> 16),
-            (byte) (value >> 8),
-            (byte) value
-        };
+    private void writeBytesBE(int value) throws IOException {
+        output.write(value >> 24);
+        output.write(value >> 16);
+        output.write(value >> 8);
+        output.write(value);
     }
 
     @Override
