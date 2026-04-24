@@ -45,9 +45,9 @@ class PngEncoderTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PngFormat format = fromImage(source);
         Optimizer optimizer = new Optimizer(format);
-        byte[] optimized = optimizer.optimize(expected);
+        optimizer.optimize(expected);
         try (PngEncoder encoder = new PngEncoder(out, optimizer.format())) {
-            encoder.writeHeader().writeImage(optimized);
+            encoder.writeHeader().writeImage(optimizer.data());
         }
 
         byte[] encoded = out.toByteArray();
@@ -126,7 +126,7 @@ class PngEncoderTest {
             case BufferedImage.TYPE_BYTE_BINARY:
                 return PngFormat.of(width, height, ColorType.GRAY, image.getColorModel().getPixelSize());
             case BufferedImage.TYPE_BYTE_INDEXED:
-                return PngFormat.indexed(width, height, 8, paletteFrom(image.getColorModel()));
+                return PngFormat.indexed(width, height, 8, paletteFrom(image.getColorModel()), null);
             default:
                 throw new IllegalArgumentException("Unsupported image type: " + image.getType());
         }

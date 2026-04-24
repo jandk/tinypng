@@ -58,8 +58,8 @@ class PngFormatTest {
     }
 
     private static void createFormat(ColorType colorType, int bitDepth) {
-        if (colorType == ColorType.INDEXED && bitDepth != 16) {
-            PngFormat.indexed(1, 1, bitDepth, new byte[]{0, 0, 0});
+        if (colorType == ColorType.INDEXED) {
+            PngFormat.indexed(1, 1, bitDepth, new byte[]{0, 0, 0}, null);
         } else {
             PngFormat.of(1, 1, colorType, bitDepth);
         }

@@ -13,8 +13,9 @@ public final class PngFormat {
     private final ColorType colorType;
     private final int bitDepth;
     private final byte[] palette;
+    private final byte[] transparency;
 
-    private PngFormat(int width, int height, ColorType colorType, int bitDepth, byte[] palette) {
+    private PngFormat(int width, int height, ColorType colorType, int bitDepth, byte[] palette, byte[] transparency) {
         if (width <= 0) {
             throw new IllegalArgumentException("width must be greater than 0");
         }
@@ -30,8 +31,15 @@ public final class PngFormat {
             if (palette.length == 0 || palette.length % 3 != 0) {
                 throw new IllegalArgumentException("palette length must be a non-zero multiple of 3");
             }
-            if (palette.length > 256 * 3) {
-                throw new IllegalArgumentException("palette cannot contain more than 256 colors");
+            if (palette.length > (3 << bitDepth)) {
+                throw new IllegalArgumentException("palette length must not be greater than " + (3 << bitDepth));
+            }
+            if (transparency != null && (transparency.length == 0 || transparency.length > palette.length / 3)) {
+                throw new IllegalArgumentException("transparency length must be between 1 and palette length");
+            }
+        } else {
+            if (palette != null || transparency != null) {
+                throw new IllegalArgumentException("palette or transparency not supported for non-indexed colors");
             }
         }
 
@@ -40,9 +48,10 @@ public final class PngFormat {
         this.bitDepth = bitDepth;
         this.colorType = colorType;
         this.palette = palette != null ? palette.clone() : null;
+        this.transparency = transparency != null ? transparency.clone() : null;
     }
 
-    private void validate(ColorType colorType, int bitDepth) {
+    private static void validate(ColorType colorType, int bitDepth) {
         if (bitDepth == 8) {
             return;
         }
@@ -68,21 +77,25 @@ public final class PngFormat {
      * @throws NullPointerException     if {@code colorType} is null
      */
     public static PngFormat of(int width, int height, ColorType colorType, int bitDepth) {
-        return new PngFormat(width, height, colorType, bitDepth, null);
+        if (colorType == ColorType.INDEXED) {
+            throw new IllegalArgumentException("use PngFormat.indexed() for indexed images");
+        }
+        return new PngFormat(width, height, colorType, bitDepth, null, null);
     }
 
     /**
      * Creates a format for palette-based (indexed) images.
      *
-     * @param width    image width in pixels, must be positive
-     * @param height   image height in pixels, must be positive
-     * @param bitDepth bits per palette index: 1, 2, 4, or 8
-     * @param palette  flat RGB palette as consecutive R, G, B bytes; length must be a non-zero multiple of 3 and at most 768 (256 colors)
+     * @param width        image width in pixels, must be positive
+     * @param height       image height in pixels, must be positive
+     * @param bitDepth     bits per palette index: 1, 2, 4, or 8
+     * @param palette      flat RGB palette as consecutive R, G, B bytes
+     * @param transparency transparency values for the palette entries
      * @return The newly created format.
      * @throws IllegalArgumentException if any parameter is invalid
      */
-    public static PngFormat indexed(int width, int height, int bitDepth, byte[] palette) {
-        return new PngFormat(width, height, ColorType.INDEXED, bitDepth, palette);
+    public static PngFormat indexed(int width, int height, int bitDepth, byte[] palette, byte[] transparency) {
+        return new PngFormat(width, height, ColorType.INDEXED, bitDepth, palette, transparency);
     }
 
     /**
@@ -121,10 +134,6 @@ public final class PngFormat {
         return bitDepth;
     }
 
-    byte[] getPalette() {
-        return palette;
-    }
-
     /**
      * Returns the number of bytes in one encoded row, including sub-byte packing.
      *
@@ -143,6 +152,14 @@ public final class PngFormat {
         return getBytesPerRow() * height;
     }
 
+    byte[] getPalette() {
+        return palette;
+    }
+
+    byte[] getTransparency() {
+        return transparency;
+    }
+
     int getBytesPerPixel() {
         return colorType.samples() * getBytesPerChannel();
     }
@@ -151,12 +168,20 @@ public final class PngFormat {
         return (bitDepth + 7) / 8;
     }
 
-    PngFormat withBitDepth(int bitDepth) {
-        return new PngFormat(width, height, colorType, bitDepth, palette);
+    PngFormat withColorType(ColorType colorType) {
+        return new PngFormat(width, height, colorType, bitDepth, colorType == ColorType.INDEXED ? palette : null, null);
     }
 
-    PngFormat withColorType(ColorType colorType) {
-        return new PngFormat(width, height, colorType, bitDepth, palette);
+    PngFormat withBitDepth(int bitDepth) {
+        return new PngFormat(width, height, colorType, bitDepth, palette, transparency);
+    }
+
+    PngFormat withPalette(byte[] palette) {
+        return new PngFormat(width, height, ColorType.INDEXED, 8, palette, null);
+    }
+
+    PngFormat withTransparency(byte[] transparency) {
+        return new PngFormat(width, height, colorType, bitDepth, palette, transparency);
     }
 
     @Override
@@ -170,7 +195,8 @@ public final class PngFormat {
             "height=" + height + ", " +
             "colorType=" + colorType + ", " +
             "bitDepth=" + bitDepth + ", " +
-            "palette=" + palette +
+            "palette=" + palette + ", " +
+            "transparency=" + (this.transparency != null ? "[" + this.transparency.length + " bytes]" : "null") +
             ")";
     }
 }
