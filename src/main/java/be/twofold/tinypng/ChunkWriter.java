@@ -9,6 +9,7 @@ final class ChunkWriter implements Closeable {
 
     static final int IHDR = 'I' << 24 | 'H' << 16 | 'D' << 8 | 'R';
     static final int PLTE = 'P' << 24 | 'L' << 16 | 'T' << 8 | 'E';
+    static final int tRNS = 't' << 24 | 'R' << 16 | 'N' << 8 | 'S';
     static final int IDAT = 'I' << 24 | 'D' << 16 | 'A' << 8 | 'T';
     static final int IEND = 'I' << 24 | 'E' << 16 | 'N' << 8 | 'D';
 

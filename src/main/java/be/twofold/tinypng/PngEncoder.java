@@ -5,6 +5,8 @@ import java.nio.*;
 import java.util.*;
 
 public final class PngEncoder implements Closeable {
+    private static final byte[] EMPTY = new byte[0];
+
     private final PngFormat format;
     private final ChunkWriter writer;
     private boolean headerWritten;
@@ -21,6 +23,7 @@ public final class PngEncoder implements Closeable {
 
         writeIHDR();
         writePLTE();
+        writeTRNS();
         headerWritten = true;
 
         return new PngWriter(format, writer);
@@ -46,8 +49,15 @@ public final class PngEncoder implements Closeable {
         }
     }
 
+    private void writeTRNS() throws IOException {
+        byte[] transparency = format.getTransparency();
+        if (transparency != null) {
+            writer.writeChunk(ChunkWriter.tRNS, transparency);
+        }
+    }
+
     private void writeIEND() throws IOException {
-        writer.writeChunk(ChunkWriter.IEND, new byte[0]);
+        writer.writeChunk(ChunkWriter.IEND, EMPTY);
     }
 
     @Override
