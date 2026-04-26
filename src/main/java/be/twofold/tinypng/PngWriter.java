@@ -1,52 +1,105 @@
 package be.twofold.tinypng;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 
-/**
- * After writing the header, this class will allow you to write images.
- * <p>
- * For now, only a single image is supported
- */
 public final class PngWriter implements Closeable {
-    private final PngFormat format;
-    private final Filter filter;
-    private IDATWriter writer;
+    private static final byte[] EMPTY = new byte[0];
 
-    PngWriter(PngFormat format, ChunkWriter writer, PngFilter filterStrategy) {
-        this.format = Objects.requireNonNull(format);
-        this.filter = new Filter(format, filterStrategy);
-        this.writer = new IDATWriter(writer);
+    private final PngFormat format;
+    private final PngConfig config;
+    private final ChunkWriter writer;
+    private boolean finished;
+
+    public PngWriter(OutputStream output, PngFormat format) throws IOException {
+        this(output, format, PngConfig.of());
+    }
+
+    public PngWriter(OutputStream output, PngFormat format, PngConfig config) throws IOException {
+        this.format = Objects.requireNonNull(format, "format must not be null");
+        this.config = Objects.requireNonNull(config, "config must not be null");
+        this.writer = new ChunkWriter(output);
     }
 
     /**
-     * Writes a single image to the output
+     * Encodes a single image, optimizing the format first if enabled in the config.
      *
-     * @param image The image to write
+     * @param image raw pixel data matching the format passed to the constructor
      */
     public void writeImage(byte[] image) throws IOException {
-        if (writer == null) {
-            throw new IllegalStateException("Image has already been written");
-        }
         if (image.length != format.getBytesPerImage()) {
             throw new IllegalArgumentException("image has wrong size, expected " + format.getBytesPerImage() + " but was " + image.length);
         }
-
-        for (int row = 0; row < format.getHeight(); row++) {
-            PngFilter filterMethod = filter.filter(image, row * format.getBytesPerRow());
-            writer.write((byte) filterMethod.ordinal());
-            writer.write(filter.bestRow(filterMethod), format.getBytesPerPixel(), format.getBytesPerRow());
+        if (finished) {
+            throw new IllegalStateException("Writer is already finished.");
         }
 
-        writer.close();
-        writer = null;
+        PngFormat format = this.format;
+        if (config.isOptimize()) {
+            Optimizer optimizer = new Optimizer(format);
+            optimizer.optimize(image);
+            format = optimizer.format();
+        }
+
+        writeHeader(format);
+        writeImageData(image, format);
+        finished = true;
+    }
+
+    private void writeHeader(PngFormat format) throws IOException {
+        writeIHDR(format);
+        writePLTE(format);
+        writeTRNS(format);
+    }
+
+    private void writeIHDR(PngFormat format) throws IOException {
+        byte[] chunk = ByteBuffer.allocate(13)
+            .putInt(format.getWidth())
+            .putInt(format.getHeight())
+            .put((byte) format.getBitDepth())
+            .put(format.getColorType().value())
+            .put((byte) 0)
+            .put((byte) 0)
+            .put((byte) 0)
+            .array();
+        writer.writeChunk(ChunkWriter.IHDR, chunk);
+    }
+
+    private void writePLTE(PngFormat format) throws IOException {
+        byte[] palette = format.getPalette();
+        if (palette != null) {
+            writer.writeChunk(ChunkWriter.PLTE, palette);
+        }
+    }
+
+    private void writeTRNS(PngFormat format) throws IOException {
+        byte[] transparency = format.getTransparency();
+        if (transparency != null) {
+            writer.writeChunk(ChunkWriter.tRNS, transparency);
+        }
+    }
+
+    private void writeImageData(byte[] image, PngFormat format) throws IOException {
+        PngFilter filterMethod = format.getColorType() == PngColorType.INDEXED
+            ? PngFilter.NONE
+            : config.getFilterMethod();
+
+        Filter filter = new Filter(format, filterMethod);
+        try (IDATWriter idatWriter = new IDATWriter(writer, config.getCompressionLevel())) {
+            for (int row = 0; row < format.getHeight(); row++) {
+                PngFilter applied = filter.filter(image, row * format.getBytesPerRow());
+                idatWriter.write((byte) applied.ordinal());
+                idatWriter.write(filter.bestRow(applied), format.getBytesPerPixel(), format.getBytesPerRow());
+            }
+        }
     }
 
     @Override
     public void close() throws IOException {
-        if (writer != null) {
-            writer.close();
-            writer = null;
+        if (finished) {
+            writer.writeChunk(ChunkWriter.IEND, EMPTY);
         }
+        writer.close();
     }
 }

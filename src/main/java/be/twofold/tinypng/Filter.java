@@ -28,6 +28,9 @@ final class Filter {
 
     PngFilter filter(byte[] row, int offset) {
         System.arraycopy(row, offset, current, bytesPerPixel, bytesPerRow);
+        if (filter == PngFilter.NONE) {
+            return PngFilter.NONE;
+        }
         PngFilter result = applyFilter();
         System.arraycopy(current, bytesPerPixel, previous, bytesPerPixel, bytesPerRow);
         return result;

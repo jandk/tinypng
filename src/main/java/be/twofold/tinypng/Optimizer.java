@@ -16,10 +16,6 @@ final class Optimizer {
         return format;
     }
 
-    byte[] data() {
-        return data;
-    }
-
     void optimize(byte[] data) {
         this.data = Objects.requireNonNull(data);
 

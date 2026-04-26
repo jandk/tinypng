@@ -5,15 +5,16 @@ import java.util.*;
 import java.util.zip.*;
 
 final class IDATWriter implements Closeable {
-    private final Deflater deflater = new Deflater(Deflater.BEST_SPEED);
     private final byte[] buffer = new byte[32 * 1024];
     private final byte[] single = new byte[1];
+    private final Deflater deflater;
     private int length = 0;
 
     private final ChunkWriter chunkWriter;
 
-    IDATWriter(ChunkWriter chunkWriter) {
+    IDATWriter(ChunkWriter chunkWriter, int compressionLevel) {
         this.chunkWriter = Objects.requireNonNull(chunkWriter);
+        this.deflater = new Deflater(compressionLevel);
     }
 
     void write(byte value) throws IOException {
@@ -48,12 +49,14 @@ final class IDATWriter implements Closeable {
 
     @Override
     public void close() throws IOException {
-        deflater.finish();
-        while (!deflater.finished()) {
-            deflate();
+        try {
+            deflater.finish();
+            while (!deflater.finished()) {
+                deflate();
+            }
+            writeIDAT();
+        } finally {
+            deflater.end();
         }
-        deflater.end();
-
-        writeIDAT();
     }
 }

@@ -11,7 +11,7 @@ import java.nio.*;
 
 import static org.assertj.core.api.Assertions.*;
 
-class PngEncoderTest {
+class PngWriterTest {
 
     @Disabled("This test doesn't work when optimizations are enabled")
     @ParameterizedTest
@@ -44,10 +44,8 @@ class PngEncoderTest {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PngFormat format = fromImage(source);
-        Optimizer optimizer = new Optimizer(format);
-        optimizer.optimize(expected);
-        try (PngEncoder encoder = new PngEncoder(out, optimizer.format())) {
-            encoder.writeHeader().writeImage(optimizer.data());
+        try (PngWriter encoder = new PngWriter(out, format)) {
+            encoder.writeImage(expected);
         }
 
         byte[] encoded = out.toByteArray();
