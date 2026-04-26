@@ -230,8 +230,7 @@ final class Optimizer {
             data[o] = uniqueColors.get(pixel).byteValue();
         }
         format = format
-            .withPalette(palette)
-            .withTransparency(transparency);
+            .withPalette(8, palette, transparency);
     }
 
     void reduceBitDepth() {
