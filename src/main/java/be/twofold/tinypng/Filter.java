@@ -1,74 +1,134 @@
 package be.twofold.tinypng;
 
 import java.util.*;
+import java.util.function.*;
 
 final class Filter {
 
-    private final PngFormat format;
+    private final int[] counts = new int[256];
     private final byte[][] filtered;
-    private byte[] previous;
-    private byte[] current;
+    private final byte[] previous;
+    private final int bytesPerPixel;
+    private final int bytesPerRow;
 
     Filter(PngFormat format) {
-        this.format = Objects.requireNonNull(format, "format must not be null");
-        this.filtered = new byte[5][format.getBytesPerPixel() + format.getBytesPerRow()];
-        this.previous = new byte[format.getBytesPerPixel() + format.getBytesPerRow()];
-        this.current = new byte[format.getBytesPerPixel() + format.getBytesPerRow()];
+        this.bytesPerPixel = format.getBytesPerPixel();
+        this.bytesPerRow = format.getBytesPerRow();
+        this.filtered = new byte[5][bytesPerPixel + bytesPerRow];
+        this.previous = new byte[bytesPerPixel + bytesPerRow];
     }
 
-    public byte[] bestRow(int method) {
+    byte[] bestRow(int method) {
         return filtered[method];
     }
 
-    int filter(byte[] row, int offset) {
-        int bpp = format.getBytesPerPixel();
-        int bpr = format.getBytesPerRow();
+    PngFilter filter(byte[] row, int offset, PngFilter filter) {
+        switch (filter) {
+            case ADAPTIVE:
+                return adaptiveFilter(row, offset, this::sad);
+            case MIN_ENTROPY:
+                return adaptiveFilter(row, offset, this::entropy);
+            default:
+                throw new AssertionError();
+        }
+    }
 
-        byte[] nRow = filtered[0];
-        byte[] sRow = filtered[1];
-        byte[] uRow = filtered[2];
-        byte[] aRow = filtered[3];
-        byte[] pRow = filtered[4];
+    private int adaptiveFilter(byte[] row, int offset, ToIntBiFunction<byte[], Integer> function) {
+        byte[] current = filtered[0];
 
-        System.arraycopy(row, offset, current, bpp, bpr);
-        System.arraycopy(row, offset, nRow, bpp, bpr);
-        for (int i = bpp; i < bpp + bpr; i++) {
+        System.arraycopy(row, offset, current, bytesPerPixel, bytesPerRow);
+        filterSub(current, bytesPerPixel, filtered[1]);
+        filterUp(current, bytesPerPixel, filtered[2]);
+        filterAverage(current, bytesPerPixel, filtered[3]);
+        filterPaeth(current, bytesPerPixel, filtered[4]);
+
+        int best = findBest(bytesPerPixel, function);
+        System.arraycopy(current, bytesPerPixel, previous, bytesPerPixel, bytesPerRow);
+        return best;
+    }
+
+    private void filterSub(byte[] current, int bpp, byte[] filtered) {
+        for (int i = bpp; i < current.length; i++) {
+            int x = Byte.toUnsignedInt(current[i]);
+            int a = Byte.toUnsignedInt(current[i - bpp]);
+            filtered[i] = (byte) (x - a);
+        }
+    }
+
+    private void filterUp(byte[] current, int bpp, byte[] filtered) {
+        for (int i = bpp; i < current.length; i++) {
+            int x = Byte.toUnsignedInt(current[i]);
+            int b = Byte.toUnsignedInt(previous[i]);
+
+            filtered[i] = (byte) (x - b);
+        }
+    }
+
+    private void filterAverage(byte[] current, int bpp, byte[] filtered) {
+        for (int i = bpp; i < current.length; i++) {
+            int x = Byte.toUnsignedInt(current[i]);
+            int a = Byte.toUnsignedInt(current[i - bpp]);
+            int b = Byte.toUnsignedInt(previous[i]);
+
+            filtered[i] = (byte) (x - ((a + b) >> 1));
+        }
+    }
+
+    private void filterPaeth(byte[] current, int bpp, byte[] filtered) {
+        for (int i = bpp; i < current.length; i++) {
             int x = Byte.toUnsignedInt(current[i]);
             int a = Byte.toUnsignedInt(current[i - bpp]);
             int b = Byte.toUnsignedInt(previous[i]);
             int c = Byte.toUnsignedInt(previous[i - bpp]);
 
-            nRow[i] = (byte) (x);
-            sRow[i] = (byte) (x - a);
-            uRow[i] = (byte) (x - b);
-            aRow[i] = (byte) (x - ((a + b) >> 1));
-            pRow[i] = (byte) (x - paeth(a, b, c));
+            filtered[i] = (byte) (x - paeth(a, b, c));
         }
-
-        int best = findBest();
-        byte[] temp = previous;
-        previous = current;
-        current = temp;
-        return best;
     }
 
-    private int findBest() {
+    private int findBest(int bpp, ToIntBiFunction<byte[], Integer> function) {
         int bestRow = 0;
-        int bestSad = Integer.MAX_VALUE;
+        int bestResult = Integer.MAX_VALUE;
         for (int i = 0; i < 5; i++) {
-            int sad = 0;
-            for (byte pixel : filtered[i]) {
-                sad += Math.abs(pixel);
-            }
-            if (sad < bestSad) {
+            int result = function.applyAsInt(filtered[i], bpp);
+            if (result < bestResult) {
                 bestRow = i;
-                bestSad = sad;
+                bestResult = result;
             }
         }
         return bestRow;
     }
 
-    private static int paeth(int a, int b, int c) {
+    private int sad(byte[] bytes, int offset) {
+        int sad = 0;
+        for (int i = offset; i < bytes.length; i++) {
+            sad += Math.abs(bytes[i]);
+        }
+        return sad;
+    }
+
+    private int entropy(byte[] bytes, int offset) {
+        int[] counts = this.counts;
+        Arrays.fill(counts, 0);
+
+        for (int i = offset; i < bytes.length; i++) {
+            counts[Byte.toUnsignedInt(bytes[i])]++;
+        }
+
+        int result = ilog2i(bytes.length - offset);
+        for (int count : counts) {
+            if (count > 0) {
+                result -= ilog2i(count);
+            }
+        }
+        return result;
+    }
+
+    private int ilog2i(int i) {
+        int log2 = 31 - Integer.numberOfLeadingZeros(i);
+        return i * log2 + ((i - (1 << log2)) * 2);
+    }
+
+    private int paeth(int a, int b, int c) {
         int p = a + b - c;
         int pa = Math.abs(p - a);
         int pb = Math.abs(p - b);
