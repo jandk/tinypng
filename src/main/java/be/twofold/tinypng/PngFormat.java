@@ -10,7 +10,7 @@ import java.util.*;
 public final class PngFormat {
     private final int width;
     private final int height;
-    private final ColorType colorType;
+    private final PngColorType colorType;
     private final int bitDepth;
 
     // Indexed color properties
@@ -24,7 +24,7 @@ public final class PngFormat {
     private PngFormat(
         int width,
         int height,
-        ColorType colorType,
+        PngColorType colorType,
         int bitDepth,
         byte[] palette,
         byte[] transparency,
@@ -51,23 +51,23 @@ public final class PngFormat {
         this.playCount = playCount;
     }
 
-    private static void validateColorAndDepth(ColorType colorType, int bitDepth) {
+    private static void validateColorAndDepth(PngColorType colorType, int bitDepth) {
         Objects.requireNonNull(colorType, "colorType must not be null");
         if (bitDepth == 8) {
             return;
         }
-        if (colorType != ColorType.INDEXED && bitDepth == 16) {
+        if (colorType != PngColorType.INDEXED && bitDepth == 16) {
             return;
         }
-        if ((colorType == ColorType.GRAY || colorType == ColorType.INDEXED)
+        if ((colorType == PngColorType.GRAY || colorType == PngColorType.INDEXED)
             && (bitDepth == 1 || bitDepth == 2 || bitDepth == 4)) {
             return;
         }
         throw new IllegalArgumentException("Invalid bit depth " + bitDepth + " for color type " + colorType);
     }
 
-    private static void validatePalette(ColorType colorType, int bitDepth, byte[] palette, byte[] transparency) {
-        if (colorType != ColorType.INDEXED) {
+    private static void validatePalette(PngColorType colorType, int bitDepth, byte[] palette, byte[] transparency) {
+        if (colorType != PngColorType.INDEXED) {
             if (palette != null || transparency != null) {
                 throw new IllegalArgumentException("palette or transparency not supported for non-indexed colors");
             }
@@ -106,7 +106,7 @@ public final class PngFormat {
      * @param bitDepth  bits per channel; valid values depend on {@code colorType}
      * @return a new {@code PngFormat}
      */
-    public static PngFormat of(int width, int height, ColorType colorType, int bitDepth) {
+    public static PngFormat of(int width, int height, PngColorType colorType, int bitDepth) {
         return new PngFormat(width, height, colorType, bitDepth, null, null, 1, 0);
     }
 
@@ -118,10 +118,10 @@ public final class PngFormat {
      * @param bitDepth     bits per pixel; valid values are 1, 2, 4, or 8
      * @param palette      RGB palette entries packed as {@code [R, G, B, R, G, B, ...]}, must not be null
      * @param transparency per-entry alpha values for the palette, or {@code null} if fully opaque
-     * @return a new {@code PngFormat} with {@link ColorType#INDEXED}
+     * @return a new {@code PngFormat} with {@link PngColorType#INDEXED}
      */
     public static PngFormat indexed(int width, int height, int bitDepth, byte[] palette, byte[] transparency) {
-        return new PngFormat(width, height, ColorType.INDEXED, bitDepth, palette, transparency, 1, 0);
+        return new PngFormat(width, height, PngColorType.INDEXED, bitDepth, palette, transparency, 1, 0);
     }
 
     /**
@@ -147,7 +147,7 @@ public final class PngFormat {
      *
      * @return the color type
      */
-    public ColorType getColorType() {
+    public PngColorType getColorType() {
         return colorType;
     }
 
@@ -238,10 +238,10 @@ public final class PngFormat {
      * @param bitDepth     bits per pixel; valid values are 1, 2, 4, or 8
      * @param palette      RGB palette entries packed as {@code [R, G, B, R, G, B, ...]}
      * @param transparency per-entry alpha values for the palette, or {@code null} if fully opaque
-     * @return a new {@code PngFormat} with {@link ColorType#INDEXED} and the given palette
+     * @return a new {@code PngFormat} with {@link PngColorType#INDEXED} and the given palette
      */
     public PngFormat withPalette(int bitDepth, byte[] palette, byte[] transparency) {
-        return new PngFormat(width, height, ColorType.INDEXED, bitDepth, palette, transparency, frameCount, playCount);
+        return new PngFormat(width, height, PngColorType.INDEXED, bitDepth, palette, transparency, frameCount, playCount);
     }
 
     /**
@@ -259,7 +259,7 @@ public final class PngFormat {
         return new PngFormat(width, height, colorType, bitDepth, palette, transparency, frameCount, playCount);
     }
 
-    PngFormat withColorType(ColorType colorType) {
+    PngFormat withColorType(PngColorType colorType) {
         return new PngFormat(width, height, colorType, bitDepth, palette, transparency, frameCount, playCount);
     }
 

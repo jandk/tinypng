@@ -102,29 +102,29 @@ class PngEncoderTest {
         switch (image.getType()) {
             case BufferedImage.TYPE_CUSTOM:
                 if (image.getColorModel().getNumComponents() == 2 && image.getColorModel().getPixelSize() == 16) {
-                    return PngFormat.of(width, height, ColorType.GRAY_ALPHA, 8);
+                    return PngFormat.of(width, height, PngColorType.GRAY_ALPHA, 8);
                 }
                 if (image.getColorModel().getNumComponents() == 2 && image.getColorModel().getPixelSize() == 32) {
-                    return PngFormat.of(width, height, ColorType.GRAY_ALPHA, 16);
+                    return PngFormat.of(width, height, PngColorType.GRAY_ALPHA, 16);
                 }
                 if (image.getColorModel().getNumComponents() == 3 && image.getColorModel().getPixelSize() == 48) {
-                    return PngFormat.of(width, height, ColorType.RGB, 16);
+                    return PngFormat.of(width, height, PngColorType.RGB, 16);
                 }
                 if (image.getColorModel().getNumComponents() == 4 && image.getColorModel().getPixelSize() == 64) {
-                    return PngFormat.of(width, height, ColorType.RGB_ALPHA, 16);
+                    return PngFormat.of(width, height, PngColorType.RGB_ALPHA, 16);
                 }
                 throw new IllegalArgumentException("Unsupported custom image type: " + image.getColorModel());
             case BufferedImage.TYPE_INT_ARGB:
             case BufferedImage.TYPE_4BYTE_ABGR:
-                return PngFormat.of(width, height, ColorType.RGB_ALPHA, 8);
+                return PngFormat.of(width, height, PngColorType.RGB_ALPHA, 8);
             case BufferedImage.TYPE_3BYTE_BGR:
-                return PngFormat.of(width, height, ColorType.RGB, 8);
+                return PngFormat.of(width, height, PngColorType.RGB, 8);
             case BufferedImage.TYPE_BYTE_GRAY:
-                return PngFormat.of(width, height, ColorType.GRAY, 8);
+                return PngFormat.of(width, height, PngColorType.GRAY, 8);
             case BufferedImage.TYPE_USHORT_GRAY:
-                return PngFormat.of(width, height, ColorType.GRAY, 16);
+                return PngFormat.of(width, height, PngColorType.GRAY, 16);
             case BufferedImage.TYPE_BYTE_BINARY:
-                return PngFormat.of(width, height, ColorType.GRAY, image.getColorModel().getPixelSize());
+                return PngFormat.of(width, height, PngColorType.GRAY, image.getColorModel().getPixelSize());
             case BufferedImage.TYPE_BYTE_INDEXED:
                 return PngFormat.indexed(width, height, 8, paletteFrom(image.getColorModel()), null);
             default:

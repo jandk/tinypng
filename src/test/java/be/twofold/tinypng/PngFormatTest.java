@@ -20,11 +20,11 @@ class PngFormatTest {
 
     @Test
     void testOf() {
-        PngFormat format = PngFormat.of(10, 20, ColorType.RGB, 8);
+        PngFormat format = PngFormat.of(10, 20, PngColorType.RGB, 8);
 
         assertThat(format.getWidth()).isEqualTo(10);
         assertThat(format.getHeight()).isEqualTo(20);
-        assertThat(format.getColorType()).isEqualTo(ColorType.RGB);
+        assertThat(format.getColorType()).isEqualTo(PngColorType.RGB);
         assertThat(format.getBitDepth()).isEqualTo(8);
         assertThat(format.getPalette()).isNull();
         assertThat(format.getTransparency()).isNull();
@@ -41,7 +41,7 @@ class PngFormatTest {
 
         assertThat(format.getWidth()).isEqualTo(4);
         assertThat(format.getHeight()).isEqualTo(8);
-        assertThat(format.getColorType()).isEqualTo(ColorType.INDEXED);
+        assertThat(format.getColorType()).isEqualTo(PngColorType.INDEXED);
         assertThat(format.getBitDepth()).isEqualTo(8);
         assertThat(format.getPalette()).isEqualTo(palette);
         assertThat(format.getTransparency()).isEqualTo(transparency);
@@ -60,20 +60,20 @@ class PngFormatTest {
     @Test
     void testThrowsOnZeroOrNegativeWidth() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-            .isThrownBy(() -> PngFormat.of(0, 1, ColorType.GRAY, 8))
+            .isThrownBy(() -> PngFormat.of(0, 1, PngColorType.GRAY, 8))
             .withMessage("width must be greater than 0");
         assertThatExceptionOfType(IllegalArgumentException.class)
-            .isThrownBy(() -> PngFormat.of(-1, 1, ColorType.GRAY, 8))
+            .isThrownBy(() -> PngFormat.of(-1, 1, PngColorType.GRAY, 8))
             .withMessage("width must be greater than 0");
     }
 
     @Test
     void testThrowsOnZeroOrNegativeHeight() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-            .isThrownBy(() -> PngFormat.of(1, 0, ColorType.GRAY, 8))
+            .isThrownBy(() -> PngFormat.of(1, 0, PngColorType.GRAY, 8))
             .withMessage("height must be greater than 0");
         assertThatExceptionOfType(IllegalArgumentException.class)
-            .isThrownBy(() -> PngFormat.of(1, -1, ColorType.GRAY, 8))
+            .isThrownBy(() -> PngFormat.of(1, -1, PngColorType.GRAY, 8))
             .withMessage("height must be greater than 0");
     }
 
@@ -91,13 +91,13 @@ class PngFormatTest {
     @Test
     void testThrowsOnInvalidBitDepth() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-            .isThrownBy(() -> PngFormat.of(1, 1, ColorType.GRAY, 3))
+            .isThrownBy(() -> PngFormat.of(1, 1, PngColorType.GRAY, 3))
             .withMessage("Invalid bit depth 3 for color type GRAY");
     }
 
     @ParameterizedTest
     @MethodSource("provideBitDepthAndColorTypeCombinations")
-    void testThrowsOnInvalidBitDepthAndColourTypeCombination(ColorType colorType, int bitDepth, boolean valid) {
+    void testThrowsOnInvalidBitDepthAndColourTypeCombination(PngColorType colorType, int bitDepth, boolean valid) {
         if (valid) {
             assertThatNoException()
                 .isThrownBy(() -> createFormat(colorType, bitDepth));
@@ -110,31 +110,31 @@ class PngFormatTest {
 
     private static Stream<Arguments> provideBitDepthAndColorTypeCombinations() {
         return Stream.of(
-            Arguments.of(ColorType.GRAY, 1, true),
-            Arguments.of(ColorType.RGB, 1, false),
-            Arguments.of(ColorType.INDEXED, 1, true),
-            Arguments.of(ColorType.GRAY_ALPHA, 1, false),
-            Arguments.of(ColorType.RGB_ALPHA, 1, false),
-            Arguments.of(ColorType.GRAY, 2, true),
-            Arguments.of(ColorType.RGB, 2, false),
-            Arguments.of(ColorType.INDEXED, 2, true),
-            Arguments.of(ColorType.GRAY_ALPHA, 2, false),
-            Arguments.of(ColorType.RGB_ALPHA, 2, false),
-            Arguments.of(ColorType.GRAY, 4, true),
-            Arguments.of(ColorType.RGB, 4, false),
-            Arguments.of(ColorType.INDEXED, 4, true),
-            Arguments.of(ColorType.GRAY_ALPHA, 4, false),
-            Arguments.of(ColorType.RGB_ALPHA, 4, false),
-            Arguments.of(ColorType.GRAY, 8, true),
-            Arguments.of(ColorType.RGB, 8, true),
-            Arguments.of(ColorType.INDEXED, 8, true),
-            Arguments.of(ColorType.GRAY_ALPHA, 8, true),
-            Arguments.of(ColorType.RGB_ALPHA, 8, true),
-            Arguments.of(ColorType.GRAY, 16, true),
-            Arguments.of(ColorType.RGB, 16, true),
-            Arguments.of(ColorType.INDEXED, 16, false),
-            Arguments.of(ColorType.GRAY_ALPHA, 16, true),
-            Arguments.of(ColorType.RGB_ALPHA, 16, true)
+            Arguments.of(PngColorType.GRAY, 1, true),
+            Arguments.of(PngColorType.RGB, 1, false),
+            Arguments.of(PngColorType.INDEXED, 1, true),
+            Arguments.of(PngColorType.GRAY_ALPHA, 1, false),
+            Arguments.of(PngColorType.RGB_ALPHA, 1, false),
+            Arguments.of(PngColorType.GRAY, 2, true),
+            Arguments.of(PngColorType.RGB, 2, false),
+            Arguments.of(PngColorType.INDEXED, 2, true),
+            Arguments.of(PngColorType.GRAY_ALPHA, 2, false),
+            Arguments.of(PngColorType.RGB_ALPHA, 2, false),
+            Arguments.of(PngColorType.GRAY, 4, true),
+            Arguments.of(PngColorType.RGB, 4, false),
+            Arguments.of(PngColorType.INDEXED, 4, true),
+            Arguments.of(PngColorType.GRAY_ALPHA, 4, false),
+            Arguments.of(PngColorType.RGB_ALPHA, 4, false),
+            Arguments.of(PngColorType.GRAY, 8, true),
+            Arguments.of(PngColorType.RGB, 8, true),
+            Arguments.of(PngColorType.INDEXED, 8, true),
+            Arguments.of(PngColorType.GRAY_ALPHA, 8, true),
+            Arguments.of(PngColorType.RGB_ALPHA, 8, true),
+            Arguments.of(PngColorType.GRAY, 16, true),
+            Arguments.of(PngColorType.RGB, 16, true),
+            Arguments.of(PngColorType.INDEXED, 16, false),
+            Arguments.of(PngColorType.GRAY_ALPHA, 16, true),
+            Arguments.of(PngColorType.RGB_ALPHA, 16, true)
         );
     }
 
@@ -145,9 +145,9 @@ class PngFormatTest {
     @Test
     void testWithPaletteChangesColorTypeToIndexed() {
         byte[] palette = makeArray(0x00, 0x00, 0x00, 0xFF, 0x00, 0x00);
-        PngFormat format = PngFormat.of(4, 4, ColorType.GRAY, 8).withPalette(8, palette, null);
+        PngFormat format = PngFormat.of(4, 4, PngColorType.GRAY, 8).withPalette(8, palette, null);
 
-        assertThat(format.getColorType()).isEqualTo(ColorType.INDEXED);
+        assertThat(format.getColorType()).isEqualTo(PngColorType.INDEXED);
         assertThat(format.getPalette()).isEqualTo(palette);
         assertThat(format.getWidth()).isEqualTo(4);
         assertThat(format.getHeight()).isEqualTo(4);
@@ -203,7 +203,7 @@ class PngFormatTest {
 
     @Test
     void testWithAnimationReturnsExpectedFields() {
-        PngFormat format = PngFormat.of(1, 1, ColorType.GRAY, 8).withAnimation(5, 3);
+        PngFormat format = PngFormat.of(1, 1, PngColorType.GRAY, 8).withAnimation(5, 3);
 
         assertThat(format.getFrameCount()).isEqualTo(5);
         assertThat(format.getPlayCount()).isEqualTo(3);
@@ -211,7 +211,7 @@ class PngFormatTest {
 
     @Test
     void testWithAnimationPlayCountZeroMeansInfiniteLoop() {
-        PngFormat format = PngFormat.of(1, 1, ColorType.GRAY, 8).withAnimation(2, 0);
+        PngFormat format = PngFormat.of(1, 1, PngColorType.GRAY, 8).withAnimation(2, 0);
 
         assertThat(format.getPlayCount()).isEqualTo(0);
     }
@@ -219,21 +219,21 @@ class PngFormatTest {
     @Test
     void testThrowsOnZeroFrameCount() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-            .isThrownBy(() -> PngFormat.of(1, 1, ColorType.GRAY, 8).withAnimation(0, 0))
+            .isThrownBy(() -> PngFormat.of(1, 1, PngColorType.GRAY, 8).withAnimation(0, 0))
             .withMessage("frameCount must be greater than 0");
     }
 
     @Test
     void testThrowsOnNegativeFrameCount() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-            .isThrownBy(() -> PngFormat.of(1, 1, ColorType.GRAY, 8).withAnimation(-1, 0))
+            .isThrownBy(() -> PngFormat.of(1, 1, PngColorType.GRAY, 8).withAnimation(-1, 0))
             .withMessage("frameCount must be greater than 0");
     }
 
     @Test
     void testThrowsOnNegativePlayCount() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-            .isThrownBy(() -> PngFormat.of(1, 1, ColorType.GRAY, 8).withAnimation(2, -1))
+            .isThrownBy(() -> PngFormat.of(1, 1, PngColorType.GRAY, 8).withAnimation(2, -1))
             .withMessage("playCount must be non-negative");
     }
 
@@ -243,38 +243,38 @@ class PngFormatTest {
 
     @Test
     void testGetBytesPerChannelReturnsCorrectValues() {
-        assertThat(PngFormat.of(1, 1, ColorType.GRAY, 1).getBytesPerChannel()).isEqualTo(1);
-        assertThat(PngFormat.of(1, 1, ColorType.GRAY, 8).getBytesPerChannel()).isEqualTo(1);
-        assertThat(PngFormat.of(1, 1, ColorType.GRAY, 16).getBytesPerChannel()).isEqualTo(2);
+        assertThat(PngFormat.of(1, 1, PngColorType.GRAY, 1).getBytesPerChannel()).isEqualTo(1);
+        assertThat(PngFormat.of(1, 1, PngColorType.GRAY, 8).getBytesPerChannel()).isEqualTo(1);
+        assertThat(PngFormat.of(1, 1, PngColorType.GRAY, 16).getBytesPerChannel()).isEqualTo(2);
     }
 
     @Test
     void testGetBytesPerPixelReturnsCorrectValues() {
-        assertThat(PngFormat.of(1, 1, ColorType.GRAY, 8).getBytesPerPixel()).isEqualTo(1);
-        assertThat(PngFormat.of(1, 1, ColorType.RGB, 8).getBytesPerPixel()).isEqualTo(3);
-        assertThat(PngFormat.of(1, 1, ColorType.GRAY_ALPHA, 8).getBytesPerPixel()).isEqualTo(2);
-        assertThat(PngFormat.of(1, 1, ColorType.RGB_ALPHA, 8).getBytesPerPixel()).isEqualTo(4);
-        assertThat(PngFormat.of(1, 1, ColorType.RGB, 16).getBytesPerPixel()).isEqualTo(6);
+        assertThat(PngFormat.of(1, 1, PngColorType.GRAY, 8).getBytesPerPixel()).isEqualTo(1);
+        assertThat(PngFormat.of(1, 1, PngColorType.RGB, 8).getBytesPerPixel()).isEqualTo(3);
+        assertThat(PngFormat.of(1, 1, PngColorType.GRAY_ALPHA, 8).getBytesPerPixel()).isEqualTo(2);
+        assertThat(PngFormat.of(1, 1, PngColorType.RGB_ALPHA, 8).getBytesPerPixel()).isEqualTo(4);
+        assertThat(PngFormat.of(1, 1, PngColorType.RGB, 16).getBytesPerPixel()).isEqualTo(6);
     }
 
     @Test
     void testGetBytesPerRowReturnsCorrectValues() {
-        assertThat(PngFormat.of(10, 1, ColorType.RGB, 8).getBytesPerRow()).isEqualTo(30);
-        assertThat(PngFormat.of(8, 1, ColorType.GRAY, 1).getBytesPerRow()).isEqualTo(1);
-        assertThat(PngFormat.of(9, 1, ColorType.GRAY, 1).getBytesPerRow()).isEqualTo(2);
+        assertThat(PngFormat.of(10, 1, PngColorType.RGB, 8).getBytesPerRow()).isEqualTo(30);
+        assertThat(PngFormat.of(8, 1, PngColorType.GRAY, 1).getBytesPerRow()).isEqualTo(1);
+        assertThat(PngFormat.of(9, 1, PngColorType.GRAY, 1).getBytesPerRow()).isEqualTo(2);
     }
 
     @Test
     void testGetBytesPerImageReturnsRowTimesHeight() {
-        PngFormat format = PngFormat.of(10, 20, ColorType.RGB, 8);
+        PngFormat format = PngFormat.of(10, 20, PngColorType.RGB, 8);
 
         assertThat(format.getBytesPerImage()).isEqualTo(600);
     }
 
     // endregion
 
-    private static void createFormat(ColorType colorType, int bitDepth) {
-        if (colorType == ColorType.INDEXED) {
+    private static void createFormat(PngColorType colorType, int bitDepth) {
+        if (colorType == PngColorType.INDEXED) {
             PngFormat.indexed(1, 1, bitDepth, new byte[]{0, 0, 0}, null);
         } else {
             PngFormat.of(1, 1, colorType, bitDepth);

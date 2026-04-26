@@ -3,7 +3,7 @@ package be.twofold.tinypng;
 /**
  * Specifies what type of pixels are represented
  */
-public enum ColorType {
+public enum PngColorType {
     /**
      * Each pixel is a grayscale sample
      */
@@ -32,7 +32,7 @@ public enum ColorType {
     private final byte value;
     private final int samples;
 
-    ColorType(int value, int samples) {
+    PngColorType(int value, int samples) {
         this.value = (byte) value;
         this.samples = samples;
     }

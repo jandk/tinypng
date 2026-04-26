@@ -10,12 +10,12 @@ import java.util.*;
  */
 public final class PngWriter implements Closeable {
     private final PngFormat format;
-    private final PngFilter filter;
+    private final Filter filter;
     private IDATWriter writer;
 
     PngWriter(PngFormat format, ChunkWriter writer) {
         this.format = Objects.requireNonNull(format);
-        this.filter = new PngFilter(format);
+        this.filter = new Filter(format);
         this.writer = new IDATWriter(writer);
     }
 

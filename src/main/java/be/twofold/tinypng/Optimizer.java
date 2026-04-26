@@ -54,7 +54,7 @@ final class Optimizer {
 
     void reduceToOpaque() {
         // Preconditions
-        if (format.getColorType() != ColorType.RGB_ALPHA && format.getColorType() != ColorType.GRAY_ALPHA) {
+        if (format.getColorType() != PngColorType.RGB_ALPHA && format.getColorType() != PngColorType.GRAY_ALPHA) {
             return;
         }
 
@@ -80,16 +80,16 @@ final class Optimizer {
             }
         }
 
-        ColorType newColorType = format.getColorType() == ColorType.RGB_ALPHA
-            ? ColorType.RGB
-            : ColorType.GRAY;
+        PngColorType newColorType = format.getColorType() == PngColorType.RGB_ALPHA
+            ? PngColorType.RGB
+            : PngColorType.GRAY;
         format = format.withColorType(newColorType);
     }
 
 
     void reduceToGray() {
         // Preconditions
-        if (format.getColorType() != ColorType.RGB && format.getColorType() != ColorType.RGB_ALPHA) {
+        if (format.getColorType() != PngColorType.RGB && format.getColorType() != PngColorType.RGB_ALPHA) {
             return;
         }
 
@@ -99,9 +99,9 @@ final class Optimizer {
             : reduceToOpaque16();
 
         if (reduced) {
-            format = format.withColorType(format.getColorType() == ColorType.RGB
-                ? ColorType.GRAY
-                : ColorType.GRAY_ALPHA);
+            format = format.withColorType(format.getColorType() == PngColorType.RGB
+                ? PngColorType.GRAY
+                : PngColorType.GRAY_ALPHA);
         }
     }
 
@@ -116,7 +116,7 @@ final class Optimizer {
         }
 
         // Apply
-        if (format.getColorType() == ColorType.RGB) {
+        if (format.getColorType() == PngColorType.RGB) {
             for (int i = 0, o = 0; i < length; i += 3, o++) {
                 data[o] = data[i];
             }
@@ -143,7 +143,7 @@ final class Optimizer {
         }
 
         // Apply
-        if (format.getColorType() == ColorType.RGB) {
+        if (format.getColorType() == PngColorType.RGB) {
             for (int i = 0, o = 0; i < length; i += 6, o += 2) {
                 data[o/**/] = data[i/**/];
                 data[o + 1] = data[i + 1];
@@ -164,7 +164,7 @@ final class Optimizer {
         if (format.getBitDepth() != 8 || format.getPalette() != null) {
             return;
         }
-        if (format.getColorType() != ColorType.RGB && format.getColorType() != ColorType.RGB_ALPHA) {
+        if (format.getColorType() != PngColorType.RGB && format.getColorType() != PngColorType.RGB_ALPHA) {
             return;
         }
 
@@ -235,13 +235,13 @@ final class Optimizer {
 
     void reduceBitDepth() {
         // Preconditions
-        if ((format.getColorType() != ColorType.INDEXED) &&
-            (format.getColorType() != ColorType.GRAY || format.getBitDepth() != 8)) {
+        if ((format.getColorType() != PngColorType.INDEXED) &&
+            (format.getColorType() != PngColorType.GRAY || format.getBitDepth() != 8)) {
             return;
         }
 
         int bitDepth;
-        if (format.getColorType() == ColorType.INDEXED) {
+        if (format.getColorType() == PngColorType.INDEXED) {
             int colorCount = format.getPalette().length / 3;
             if (colorCount <= 2) {
                 bitDepth = 1;
