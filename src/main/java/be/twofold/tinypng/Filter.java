@@ -6,65 +6,86 @@ import java.util.function.*;
 final class Filter {
 
     private final int[] counts = new int[256];
-    private final byte[][] filtered;
-    private final byte[] previous;
     private final int bytesPerPixel;
     private final int bytesPerRow;
+    private final PngFilter filter;
+    private final byte[][] filtered;
+    private final byte[] current;
+    private final byte[] previous;
 
-    Filter(PngFormat format) {
+    Filter(PngFormat format, PngFilter filter) {
         this.bytesPerPixel = format.getBytesPerPixel();
         this.bytesPerRow = format.getBytesPerRow();
+        this.filter = Objects.requireNonNull(filter);
         this.filtered = new byte[5][bytesPerPixel + bytesPerRow];
+        this.current = filtered[0];
         this.previous = new byte[bytesPerPixel + bytesPerRow];
     }
 
-    byte[] bestRow(int method) {
-        return filtered[method];
+    byte[] bestRow(PngFilter filter) {
+        return filtered[filter.ordinal()];
     }
 
-    PngFilter filter(byte[] row, int offset, PngFilter filter) {
+    PngFilter filter(byte[] row, int offset) {
+        System.arraycopy(row, offset, current, bytesPerPixel, bytesPerRow);
+        PngFilter result = applyFilter();
+        System.arraycopy(current, bytesPerPixel, previous, bytesPerPixel, bytesPerRow);
+        return result;
+    }
+
+    private PngFilter applyFilter() {
         switch (filter) {
+            case NONE:
+                return PngFilter.NONE;
+            case SUB:
+                return filterSub(bytesPerPixel, filtered[1]);
+            case UP:
+                return filterUp(bytesPerPixel, filtered[2]);
+            case AVERAGE:
+                return filterAverage(bytesPerPixel, filtered[3]);
+            case PAETH:
+                return filterPaeth(bytesPerPixel, filtered[4]);
             case ADAPTIVE:
-                return adaptiveFilter(row, offset, this::sad);
+                return applyAdaptive(this::sad);
             case MIN_ENTROPY:
-                return adaptiveFilter(row, offset, this::entropy);
+                return applyAdaptive(this::entropy);
             default:
                 throw new AssertionError();
         }
     }
 
-    private int adaptiveFilter(byte[] row, int offset, ToIntBiFunction<byte[], Integer> function) {
-        byte[] current = filtered[0];
+    private PngFilter applyAdaptive(ToIntBiFunction<byte[], Integer> heuristic) {
+        filterSub(bytesPerPixel, filtered[1]);
+        filterUp(bytesPerPixel, filtered[2]);
+        filterAverage(bytesPerPixel, filtered[3]);
+        filterPaeth(bytesPerPixel, filtered[4]);
 
-        System.arraycopy(row, offset, current, bytesPerPixel, bytesPerRow);
-        filterSub(current, bytesPerPixel, filtered[1]);
-        filterUp(current, bytesPerPixel, filtered[2]);
-        filterAverage(current, bytesPerPixel, filtered[3]);
-        filterPaeth(current, bytesPerPixel, filtered[4]);
-
-        int best = findBest(bytesPerPixel, function);
-        System.arraycopy(current, bytesPerPixel, previous, bytesPerPixel, bytesPerRow);
-        return best;
+        return findBest(bytesPerPixel, heuristic);
     }
 
-    private void filterSub(byte[] current, int bpp, byte[] filtered) {
+    private PngFilter filterSub(int bpp, byte[] filtered) {
+        byte[] current = this.current;
         for (int i = bpp; i < current.length; i++) {
             int x = Byte.toUnsignedInt(current[i]);
             int a = Byte.toUnsignedInt(current[i - bpp]);
             filtered[i] = (byte) (x - a);
         }
+        return PngFilter.SUB;
     }
 
-    private void filterUp(byte[] current, int bpp, byte[] filtered) {
+    private PngFilter filterUp(int bpp, byte[] filtered) {
+        byte[] current = this.current;
         for (int i = bpp; i < current.length; i++) {
             int x = Byte.toUnsignedInt(current[i]);
             int b = Byte.toUnsignedInt(previous[i]);
 
             filtered[i] = (byte) (x - b);
         }
+        return PngFilter.UP;
     }
 
-    private void filterAverage(byte[] current, int bpp, byte[] filtered) {
+    private PngFilter filterAverage(int bpp, byte[] filtered) {
+        byte[] current = this.current;
         for (int i = bpp; i < current.length; i++) {
             int x = Byte.toUnsignedInt(current[i]);
             int a = Byte.toUnsignedInt(current[i - bpp]);
@@ -72,9 +93,11 @@ final class Filter {
 
             filtered[i] = (byte) (x - ((a + b) >> 1));
         }
+        return PngFilter.AVERAGE;
     }
 
-    private void filterPaeth(byte[] current, int bpp, byte[] filtered) {
+    private PngFilter filterPaeth(int bpp, byte[] filtered) {
+        byte[] current = this.current;
         for (int i = bpp; i < current.length; i++) {
             int x = Byte.toUnsignedInt(current[i]);
             int a = Byte.toUnsignedInt(current[i - bpp]);
@@ -83,19 +106,20 @@ final class Filter {
 
             filtered[i] = (byte) (x - paeth(a, b, c));
         }
+        return PngFilter.PAETH;
     }
 
-    private int findBest(int bpp, ToIntBiFunction<byte[], Integer> function) {
+    private PngFilter findBest(int bpp, ToIntBiFunction<byte[], Integer> scorer) {
         int bestRow = 0;
         int bestResult = Integer.MAX_VALUE;
         for (int i = 0; i < 5; i++) {
-            int result = function.applyAsInt(filtered[i], bpp);
+            int result = scorer.applyAsInt(filtered[i], bpp);
             if (result < bestResult) {
                 bestRow = i;
                 bestResult = result;
             }
         }
-        return bestRow;
+        return PngFilter.of(bestRow);
     }
 
     private int sad(byte[] bytes, int offset) {

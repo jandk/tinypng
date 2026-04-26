@@ -13,9 +13,9 @@ public final class PngWriter implements Closeable {
     private final Filter filter;
     private IDATWriter writer;
 
-    PngWriter(PngFormat format, ChunkWriter writer) {
+    PngWriter(PngFormat format, ChunkWriter writer, PngFilter filterStrategy) {
         this.format = Objects.requireNonNull(format);
-        this.filter = new Filter(format);
+        this.filter = new Filter(format, filterStrategy);
         this.writer = new IDATWriter(writer);
     }
 
@@ -33,8 +33,8 @@ public final class PngWriter implements Closeable {
         }
 
         for (int row = 0; row < format.getHeight(); row++) {
-            int filterMethod = filter.filter(image, row * format.getBytesPerRow());
-            writer.write((byte) filterMethod);
+            PngFilter filterMethod = filter.filter(image, row * format.getBytesPerRow());
+            writer.write((byte) filterMethod.ordinal());
             writer.write(filter.bestRow(filterMethod), format.getBytesPerPixel(), format.getBytesPerRow());
         }
 

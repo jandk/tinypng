@@ -26,7 +26,7 @@ public final class PngEncoder implements Closeable {
         writeTRNS();
         headerWritten = true;
 
-        return new PngWriter(format, writer);
+        return new PngWriter(format, writer, PngFilter.ADAPTIVE);
     }
 
     private void writeIHDR() throws IOException {

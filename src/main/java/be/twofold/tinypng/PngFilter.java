@@ -38,4 +38,22 @@ public enum PngFilter {
      * Heuristic filtering based on the minimum entropy for each scanline.
      */
     MIN_ENTROPY,
+    ;
+
+    public static PngFilter of(int i) {
+        switch (i) {
+            case 0:
+                return NONE;
+            case 1:
+                return SUB;
+            case 2:
+                return UP;
+            case 3:
+                return AVERAGE;
+            case 4:
+                return PAETH;
+            default:
+                throw new IllegalArgumentException("Invalid filter type");
+        }
+    }
 }
